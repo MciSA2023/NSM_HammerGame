@@ -76,7 +76,7 @@ body {
 #awning {
     position: absolute;
     left: 15vw;
-    top: 20vh;
+    top: 30vh;
     height: 40px;
     width: var(--awning-width, 0vw);
     background-color: #8b0000;
@@ -104,7 +104,7 @@ body {
 /* --- DIE FIGUR --- */
 #person-png {
     position: absolute;
-    left: 25vw;
+    left: 45vw;
     bottom: 5vh;
     /* Steht exakt auf dem grünen Boden */
     height: 45vh;
