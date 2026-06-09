@@ -19,7 +19,6 @@ class GameEngine {
 
     updateLoop() {
         const isIdle = (Date.now() - this.lastInputTime) > 1500;
-
         if (isIdle && this.clicks > 0) {
             this.clicks -= this.decayRate;
             if (this.clicks < 0) this.clicks = 0;
@@ -41,26 +40,33 @@ class GameEngine {
     }
 }
 
-// --- 2. UI CONTROLLER ---
+// --- 2. UI CONTROLLER (2 Phasen System mit Variablen) ---
 class UIController {
     constructor() {
         this.canvas = document.getElementById('rain-canvas');
         this.ctx = this.canvas.getContext('2d');
-        this.awning = document.getElementById('awning');
-        this.person = document.getElementById('person-png');
+        this.stormOverlay = document.getElementById('storm-overlay');
+        this.personCover = document.getElementById('person-cover');
         this.percentageText = document.getElementById('percentage-text');
         this.milestoneMessage = document.getElementById('milestone-message');
 
-        this.words = ["SCHUTZ", "RUHE", "ZUFLUCHT", "STILLE", "SICHERHEIT", "GEBORGENHEIT", "FRIEDEN", "KLARHEIT", "AATM MANTHAN"];
+        this.words = ["RUHE", "FOKUS", "KLARHEIT", "STILLE", "ERWACHEN", "LIEBE", "FRIEDEN", "ERKENNTNIS", "AATM MANTHAN"];
+
+        // ========================================================
+        // ⚙️ KONFIGURATION DER PHASEN
+        // Hier kannst du das exakte Timing einstellen!
+        // ========================================================
+        this.config = {
+            rainStopPercent: 20,     // Bei wie viel % der Regen komplett weg ist (z.B. 30%)
+            revealStartPercent: 21,  // Bei wie viel % die Farbe anfängt sichtbar zu werden
+            revealEndPercent: 100     // Bei wie viel % das Bild komplett entschleiert ist
+        };
+        // ========================================================
 
         this.drops = [];
         this.splashes = [];
-
-        this.wallX = 0;
-        this.awningStartY = 0;
-        this.currentAwningWidthPx = 0;
-        this.roofAngleRadians = 5 * (Math.PI / 180);
-        this.groundY = 0; // NEU: Höhe des Bodens
+        this.groundY = 0;
+        this.targetDrops = 300; // Maximale Regenmenge zu Beginn
 
         this.initCanvas();
         window.addEventListener('resize', () => this.initCanvas());
@@ -70,82 +76,85 @@ class UIController {
     initCanvas() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
-
-        this.wallX = this.canvas.width * 0.15;
-        this.awningStartY = this.canvas.height * 0.20;
-        // Der Boden fängt bei 95% der Bildschirmhöhe an (5vh Höhe)
         this.groundY = this.canvas.height * 0.95;
 
         this.drops = [];
-        for (let i = 0; i < 350; i++) {
+        for (let i = 0; i < this.targetDrops; i++) {
             this.drops.push(this.createDrop());
         }
     }
 
     createDrop(startAtTop = true) {
         return {
-            x: Math.random() * (this.canvas.width * 2),
+            x: Math.random() * this.canvas.width,
             y: startAtTop ? Math.random() * -this.canvas.height : -20,
             length: Math.random() * 20 + 10,
             speedY: Math.random() * 15 + 20,
-            speedX: -(Math.random() * 10 + 15),
+            speedX: (Math.random() - 0.5) * 2,
             opacity: Math.random() * 0.4 + 0.1
         };
     }
 
-    createSplash(x, y, isGround = false) {
+    createSplash(x, y) {
         this.splashes.push({
-            x: x,
-            y: y,
-            radius: 1,
-            maxRadius: isGround ? Math.random() * 8 + 4 : Math.random() * 6 + 3,
-            opacity: 0.6
+            x: x, y: y,
+            radius: 1, maxRadius: Math.random() * 6 + 3,
+            opacity: 0.5
         });
     }
 
     updateScene(percentage) {
         this.percentageText.innerHTML = `${percentage.toFixed(1)} <span class="percent-sign">%</span>`;
 
-        let maxAwningVw = 45;
-        let currentVw = (percentage / 100) * maxAwningVw;
-        this.awning.style.setProperty('--awning-width', `${currentVw}vw`);
+        // ==========================================
+        // PHASE 1: Regen stoppt (Dynamisch über config)
+        // ==========================================
+        let rainIntensity = 1.0;
+        if (percentage < this.config.rainStopPercent) {
+            rainIntensity = 1.0 - (percentage / this.config.rainStopPercent);
+        } else {
+            rainIntensity = 0;
+        }
 
-        this.currentAwningWidthPx = (currentVw / 100) * window.innerWidth;
+        this.targetDrops = Math.floor(300 * rainIntensity);
+        this.stormOverlay.style.opacity = rainIntensity;
 
-        let brightness = percentage > 50 ? 1.0 : 0.3 + (percentage / 100) * 0.8;
-        this.person.style.setProperty('--person-brightness', brightness);
+        // ==========================================
+        // PHASE 2: Farbe verschwindet (Dynamisch über config)
+        // ==========================================
+        let revealProgress = 0;
+        if (percentage >= this.config.revealStartPercent) {
+            let revealRange = this.config.revealEndPercent - this.config.revealStartPercent;
+            revealProgress = ((percentage - this.config.revealStartPercent) / revealRange) * 100;
+
+            // Verhindern, dass der Wert über 100% hinausschießt
+            if (revealProgress > 100) revealProgress = 100;
+        }
+
+        this.personCover.style.setProperty('--reveal-percentage', `${revealProgress}%`);
     }
 
     drawLoop() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
         this.ctx.lineWidth = 1.5;
         this.ctx.lineCap = 'round';
-
-        let awningRightEdgeX = this.wallX + this.currentAwningWidthPx;
 
         for (let i = 0; i < this.drops.length; i++) {
             let drop = this.drops[i];
             let nextX = drop.x + drop.speedX;
             let nextY = drop.y + drop.speedY;
 
-            // 1. KOLLISION MIT DEM DACH
-            if (nextX > this.wallX && nextX < awningRightEdgeX) {
-                let distanceFromWall = nextX - this.wallX;
-                let roofYAtThisX = this.awningStartY + Math.tan(this.roofAngleRadians) * distanceFromWall;
+            if (nextY >= this.groundY) {
+                this.createSplash(nextX, this.groundY);
 
-                if (drop.y < roofYAtThisX && nextY >= roofYAtThisX) {
-                    this.createSplash(nextX, roofYAtThisX, false);
+                if (this.drops.length > this.targetDrops) {
+                    this.drops.splice(i, 1);
+                    i--;
+                    continue;
+                } else {
                     this.drops[i] = this.createDrop(false);
                     continue;
                 }
-            }
-
-            // 2. KOLLISION MIT DEM GRÜNEN BODEN
-            if (nextY >= this.groundY) {
-                this.createSplash(nextX, this.groundY, true); // Größerer Splash auf dem Boden
-                this.drops[i] = this.createDrop(false);
-                continue;
             }
 
             this.ctx.strokeStyle = `rgba(180, 210, 255, ${drop.opacity})`;
@@ -156,17 +165,11 @@ class UIController {
 
             drop.x = nextX;
             drop.y = nextY;
-
-            if (drop.x < -100) {
-                this.drops[i] = this.createDrop(false);
-            }
         }
 
-        // Splashes zeichnen
         for (let j = this.splashes.length - 1; j >= 0; j--) {
             let splash = this.splashes[j];
-            splash.radius += 0.8;
-            splash.x -= 1;
+            splash.radius += 1;
             splash.opacity -= 0.05;
 
             if (splash.opacity <= 0) {
@@ -174,8 +177,7 @@ class UIController {
             } else {
                 this.ctx.fillStyle = `rgba(200, 230, 255, ${splash.opacity})`;
                 this.ctx.beginPath();
-                // Wenn der Splash auf dem Boden ist, machen wir einen vollen, flachen Tropfen
-                this.ctx.arc(splash.x, splash.y, splash.radius, 0, Math.PI * 2);
+                this.ctx.arc(splash.x, splash.y, splash.radius, 0, Math.PI);
                 this.ctx.fill();
             }
         }
@@ -191,6 +193,7 @@ class UIController {
     }
 }
 
+
 // --- 3. HARDWARE INPUT MANAGER ---
 class ArduinoInputManager {
     constructor(engine) {
@@ -202,14 +205,13 @@ class ArduinoInputManager {
         this.btn.innerText = "🔌 Arduino verbinden";
         this.btn.style.position = "absolute";
         this.btn.style.top = "20px";
-        this.btn.style.right = "20px";
+        this.btn.style.left = "20px";
         this.btn.style.zIndex = "100";
         this.btn.style.background = "rgba(255,255,255,0.1)";
         this.btn.style.color = "white";
         this.btn.style.border = "1px solid rgba(255,255,255,0.3)";
         this.btn.style.padding = "10px 20px";
         this.btn.style.cursor = "pointer";
-        this.btn.style.borderRadius = "4px";
         document.body.appendChild(this.btn);
 
         this.btn.addEventListener('click', () => this.connectToArduino());
@@ -221,7 +223,6 @@ class ArduinoInputManager {
                 this.port = await navigator.serial.requestPort();
                 await this.port.open({ baudRate: 115200 });
                 this.btn.style.display = "none";
-
                 const textDecoder = new TextDecoderStream();
                 this.port.readable.pipeTo(textDecoder.writable);
                 this.reader = textDecoder.readable.getReader();
@@ -259,7 +260,6 @@ class KeyboardInputManager {
     }
 }
 
-// --- INITIALISIERUNG ---
 document.addEventListener("DOMContentLoaded", () => {
     const ui = new UIController();
     const engine = new GameEngine(ui);

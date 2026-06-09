@@ -1,7 +1,7 @@
 body {
     margin: 0;
     padding: 0;
-    background: linear-gradient(to bottom, #1a1e29 0%, #2c3545 100%);
+    background-color: #0a0c14;
     color: #ffffff;
     font-family: 'Segoe UI', Roboto, sans-serif;
     display: flex;
@@ -17,124 +17,88 @@ body {
     height: 100vh;
 }
 
+/* --- DAS WETTER --- */
+#sky-background {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    /* Ein sanftes, klares Licht (Die Wahrheit) */
+    background: radial-gradient(circle at 50% 60%, #2980b9 0%, #0a0c14 80%);
+    z-index: 0;
+}
+
+#storm-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    /* Der dunkle Sturm (Wird über JS langsam ausgeblendet) */
+    background: linear-gradient(to bottom, #11141d 0%, #202635 100%);
+    z-index: 1;
+    transition: opacity 0.2s ease-out;
+}
+
 #rain-canvas {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 1;
-}
-
-/* --- DAS GEBÄUDE LINKS --- */
-#building-wall {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 15vw;
-    height: 100%;
-
-    /* Warmer, erdiger Braunton passend zum Dach */
-    background-color: #5d4037;
-
-    /* Erzeugt eine dezente horizontale Holz/Klinker-Struktur */
-    background-image: linear-gradient(rgba(0, 0, 0, 0.2) 2px, transparent 2px);
-    background-size: 100% 30px;
-
-    border-right: 10px solid #3e2723;
-    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
     z-index: 2;
 }
 
-/* Ein leuchtendes Fenster, das Leben in das Gebäude bringt */
-#building-window {
-    position: absolute;
-    top: 40vh;
-    /* Sitzt gemütlich unter dem Dach */
-    left: 3vw;
-    width: 9vw;
-    height: 25vh;
-    background-color: #1a2536;
-    /* Dunkles Glas */
-    border: 5px solid #3e2723;
-    border-radius: 4px;
-    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
-}
-
-/* Warmer Lichtschein im Fenster */
-#building-window::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(to top, rgba(243, 156, 18, 0.4) 0%, transparent 70%);
-}
-
-/* --- DIE MARKISE --- */
-#awning {
-    position: absolute;
-    left: 15vw;
-    top: 30vh;
-    height: 40px;
-    width: var(--awning-width, 0vw);
-    background-color: #8b0000;
-    border-radius: 0 5px 5px 0;
-    box-shadow: 10px 15px 30px rgba(0, 0, 0, 0.6);
-    z-index: 4;
-    overflow: hidden;
-    transition: width 0.1s ease-out;
-
-    /* WICHTIG: Dreht sich an der linken Wand nach unten */
-    transform-origin: top left;
-    transform: rotate(5deg);
-}
-
-.awning-stripes {
-    width: 100%;
-    height: 100%;
-    background: repeating-linear-gradient(-45deg,
-            #c0392b,
-            #c0392b 30px,
-            #f39c12 30px,
-            #f39c12 60px);
-}
-
-/* --- DIE FIGUR --- */
-#person-png {
-    position: absolute;
-    left: 45vw;
-    bottom: 5vh;
-    /* Steht exakt auf dem grünen Boden */
-    height: 45vh;
-    z-index: 3;
-    filter: brightness(var(--person-brightness, 0.3));
-    transition: filter 0.4s;
-}
-
-/* --- DER NEUE GRÜNE BODEN --- */
 #ground {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
     height: 5vh;
-    /* Nimmt die unteren 5% des Bildschirms ein */
-
-    /* Dunkles, nasses Grasgrün */
-    background: linear-gradient(to bottom, #1b3a24 0%, #0d2113 100%);
-    border-top: 4px solid #142e1b;
+    background: linear-gradient(to bottom, #111a1f 0%, #05080a 100%);
     z-index: 2;
 }
 
-/* UI Texte */
+/* --- DIE ZWEITEILIGE FIGUR --- */
+#person-wrapper {
+    position: absolute;
+    bottom: 5vh;
+    /* Steht auf dem Boden */
+    left: 50%;
+    transform: translateX(-50%);
+    /* Exakt in der Mitte zentriert */
+    width: 25vh;
+    height: 50vh;
+    z-index: 4;
+}
+
+/* Beide SVG-Container liegen absolut passgenau übereinander */
+#person-colorful,
+#person-cover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#person-cover {
+    /* Magie: 'inset(Top Right Bottom Left)' 
+       Ist die Variable bei 0%, ist das Bild komplett sichtbar.
+       Steigt die Variable auf 100%, ist das Bild von oben her weggeschnitten!
+    */
+    clip-path: inset(var(--reveal-percentage, 0%) 0 0 0);
+    transition: clip-path 0.1s linear;
+}
+
+/* SVGs passen sich dem Container an */
+svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* --- UI --- */
 #ui-overlay {
     position: absolute;
-    top: 5vh;
-    /* Nach oben geschoben, damit der Boden frei bleibt */
+    bottom: 10vh;
     right: 5vw;
-    /* Nach rechts gesetzt, weg vom Gebäude */
     display: flex;
     flex-direction: column;
     align-items: flex-end;
@@ -142,24 +106,22 @@ body {
 }
 
 #percentage-text {
-    font-size: 2.5rem;
-    font-weight: 300;
-    letter-spacing: 2px;
+    font-size: 3rem;
+    font-weight: 200;
 }
 
 .percent-sign {
     font-size: 1.5rem;
-    color: rgba(255, 255, 255, 0.4);
+    opacity: 0.5;
 }
 
 #milestone-message {
-    margin-top: 5px;
-    font-size: 1.5rem;
+    font-size: 2rem;
     color: #f1c40f;
     letter-spacing: 5px;
     opacity: 0;
+    transition: all 0.5s;
     transform: translateY(10px);
-    transition: all 0.4s ease;
 }
 
 #milestone-message.show {
