@@ -4,21 +4,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aatm Manthan - Introspektion</title>
+    <title>Aatm Manthan - Der Spiegel</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <div id="exhibition-container">
-        <div id="bar-container">
-            <div id="fill-bar"></div>
+    <div id="exhibition-scene">
+
+        <div id="mirror-frame">
+            <div id="mirror-glass">
+                <svg id="reflection-figure" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="glow" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#ffffff" />
+                            <stop offset="100%" stop-color="#00a8ff" />
+                        </linearGradient>
+                    </defs>
+                    <circle cx="50" cy="40" r="25" fill="url(#glow)" />
+                    <path d="M 15 100 Q 50 60 85 100 L 95 200 L 5 200 Z" fill="url(#glow)" />
+                </svg>
+            </div>
+
+            <div id="glass-glare"></div>
         </div>
-        <div id="percentage-text">0.0 <span class="percent-sign">%</span></div>
-        <div id="milestone-message"></div>
+
+        <svg id="foreground-figure" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="40" r="25" fill="#020308" />
+            <path d="M 15 100 Q 50 60 85 100 L 95 200 L 5 200 Z" fill="#020308" />
+        </svg>
+
+        <div id="ui-overlay">
+            <div id="percentage-text">0.0 <span class="percent-sign">%</span></div>
+            <div id="milestone-message"></div>
+        </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="app.js"></script>
 </body>
 
 </html>

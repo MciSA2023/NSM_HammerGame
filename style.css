@@ -1,11 +1,9 @@
-/* Grundrauschen entfernen und tiefblauen Hintergrund setzen */
 body {
     margin: 0;
     padding: 0;
-    background-color: #0d1128;
-    /* Cloud Burst - Tiefblau */
+    background-color: #050714;
     color: #ffffff;
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: 'Segoe UI', Roboto, sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -13,73 +11,114 @@ body {
     overflow: hidden;
 }
 
-#exhibition-container {
+#exhibition-scene {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
     display: flex;
-    flex-direction: column;
+    justify-content: center;
     align-items: center;
 }
 
-/* Die leere Säule */
-#bar-container {
-    width: 6px;
-    height: 60vh;
-    background-color: rgba(6, 147, 227, 0.15);
-    /* Zartes Cerulean Blau */
-    border: 1px solid rgba(142, 209, 252, 0.2);
-    border-radius: 4px;
+/* --- DER SPIEGEL --- */
+#mirror-frame {
     position: relative;
+    width: 50vh;
+    height: 70vh;
+    border-radius: 250px 250px 10px 10px;
+    /* Klassische, oben abgerundete Spiegelform */
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 80px rgba(0, 168, 255, 0.15), inset 0 0 50px rgba(0, 0, 0, 0.8);
+    background-color: #02040a;
+    overflow: hidden;
+    margin-bottom: 10vh;
+    /* Etwas nach oben schieben */
+}
+
+#mirror-glass {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     display: flex;
     justify-content: center;
+    align-items: flex-end;
+    /* Figur steht unten am Rand */
 }
 
-/* Die aufsteigende Energie */
-#fill-bar {
-    width: 100%;
-    height: 0%;
-    background-color: #ffffff;
+/* Die Reflexion im Spiegel */
+#reflection-figure {
+    width: 60%;
+    height: auto;
+    margin-bottom: -10%;
+    /* Leicht angeschnitten */
+
+    /* Dynamischer Fokus-Pull via JavaScript */
+    filter: blur(var(--blur-amount, 30px)) brightness(var(--brightness-amount, 0.3));
+    transform: scale(var(--scale-amount, 1.1));
+    transition: filter 0.1s ease-out, transform 0.1s ease-out;
+}
+
+#glass-glare {
     position: absolute;
-    bottom: 0;
-    border-radius: 4px;
-    transition: height 0.15s ease-out, box-shadow 0.3s ease;
-    /* Standard-Glow in strahlendem Blau */
-    box-shadow: 0 0 15px 5px rgba(142, 209, 252, 0.5),
-        0 0 30px 10px rgba(6, 147, 227, 0.3);
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 40%);
+    pointer-events: none;
 }
 
-/* Wird per JavaScript bei einem 10er Schritt hinzugefügt */
-#fill-bar.glow-gold {
-    background-color: #fffbeb;
-    box-shadow: 0 0 20px 8px rgba(255, 215, 0, 0.8),
-        0 0 40px 15px rgba(255, 140, 0, 0.5);
+/* --- DIE VORDERGRUND-FIGUR --- */
+#foreground-figure {
+    position: absolute;
+    bottom: -5vh;
+    /* Steht ganz vorne am unteren Bildschirmrand */
+    width: 45vh;
+    height: auto;
+    z-index: 10;
+    /* Ein leichter Schein nach hinten, um sich vom Spiegel abzuheben */
+    filter: drop-shadow(0px -10px 30px rgba(0, 0, 0, 0.9));
 }
 
-/* Typografie für die Prozentzahl */
+/* --- UI ELEMENTE --- */
+#ui-overlay {
+    position: absolute;
+    bottom: 5vh;
+    left: 5vw;
+    /* Dezent in die linke Ecke geschoben, um die Figur nicht zu verdecken */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    z-index: 20;
+}
+
 #percentage-text {
-    margin-top: 40px;
-    font-size: 2.5rem;
+    font-size: 2rem;
     font-weight: 300;
-    letter-spacing: 2px;
-    text-shadow: 0 0 10px rgba(142, 209, 252, 0.4);
+    letter-spacing: 4px;
+    opacity: 0.6;
 }
 
 .percent-sign {
     font-size: 1.2rem;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.4);
 }
 
-/* Motivierende Text-Einblendung bei Meilensteinen */
 #milestone-message {
-    margin-top: 20px;
-    font-size: 1.2rem;
-    color: #FFD700;
-    font-weight: 300;
-    letter-spacing: 4px;
+    margin-top: 10px;
+    font-size: 1.5rem;
+    color: #ffffff;
+    font-weight: 400;
+    letter-spacing: 8px;
+    text-shadow: 0 0 15px rgba(0, 168, 255, 0.8);
     opacity: 0;
-    transform: translateY(10px);
-    transition: all 0.5s ease;
+    transform: translateX(-20px);
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 #milestone-message.show {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(0);
 }
