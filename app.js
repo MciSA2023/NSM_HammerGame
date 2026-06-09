@@ -41,7 +41,7 @@ class GameEngine {
     }
 }
 
-// --- 2. UI CONTROLLER (Markise & Physik-Regen) ---
+// --- 2. UI CONTROLLER ---
 class UIController {
     constructor() {
         this.canvas = document.getElementById('rain-canvas');
@@ -55,7 +55,12 @@ class UIController {
 
         this.drops = [];
         this.splashes = [];
-        this.currentAwningWidthPx = 0; // Wie viele Pixel ist das Dach gerade breit?
+
+        this.wallX = 0;
+        this.awningStartY = 0;
+        this.currentAwningWidthPx = 0;
+        this.roofAngleRadians = 5 * (Math.PI / 180);
+        this.groundY = 0; // NEU: Höhe des Bodens
 
         this.initCanvas();
         window.addEventListener('resize', () => this.initCanvas());
@@ -66,112 +71,112 @@ class UIController {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
 
-        // Fülle das Array mit Regentropfen
+        this.wallX = this.canvas.width * 0.15;
+        this.awningStartY = this.canvas.height * 0.20;
+        // Der Boden fängt bei 95% der Bildschirmhöhe an (5vh Höhe)
+        this.groundY = this.canvas.height * 0.95;
+
         this.drops = [];
-        for (let i = 0; i < 300; i++) {
+        for (let i = 0; i < 350; i++) {
             this.drops.push(this.createDrop());
         }
     }
 
     createDrop(startAtTop = true) {
         return {
-            x: Math.random() * (this.canvas.width * 1.5), // Etwas weiter rechts starten lassen wegen dem Wind
-            y: startAtTop ? Math.random() * -this.canvas.height : -10,
-            length: Math.random() * 15 + 10,
-            speedY: Math.random() * 15 + 15, // Fallgeschwindigkeit
-            speedX: - (Math.random() * 3 + 2), // Windgeschwindigkeit (nach links)
-            opacity: Math.random() * 0.3 + 0.1
+            x: Math.random() * (this.canvas.width * 2),
+            y: startAtTop ? Math.random() * -this.canvas.height : -20,
+            length: Math.random() * 20 + 10,
+            speedY: Math.random() * 15 + 20,
+            speedX: -(Math.random() * 10 + 15),
+            opacity: Math.random() * 0.4 + 0.1
         };
     }
 
-    createSplash(x, y) {
+    createSplash(x, y, isGround = false) {
         this.splashes.push({
             x: x,
             y: y,
             radius: 1,
-            maxRadius: Math.random() * 5 + 3,
-            opacity: 0.5
+            maxRadius: isGround ? Math.random() * 8 + 4 : Math.random() * 6 + 3,
+            opacity: 0.6
         });
     }
 
     updateScene(percentage) {
         this.percentageText.innerHTML = `${percentage.toFixed(1)} <span class="percent-sign">%</span>`;
 
-        // 1. Markise ausfahren
-        // Bei 0% ist sie 0vw breit, bei 100% ist sie 60vw breit (deckt die Person ab)
-        let maxAwningVw = 60;
+        let maxAwningVw = 45;
         let currentVw = (percentage / 100) * maxAwningVw;
         this.awning.style.setProperty('--awning-width', `${currentVw}vw`);
 
-        // Berechne die absolute Pixelbreite für die Regen-Kollision
-        let wallWidthPx = window.innerWidth * 0.15; // 15vw Wandbreite
-        let startX = window.innerWidth - wallWidthPx; // X-Koordinate der Wand
         this.currentAwningWidthPx = (currentVw / 100) * window.innerWidth;
 
-        // Y-Koordinate der Markise für die Kollision (25vh)
-        this.awningY = window.innerHeight * 0.25;
-        this.awningLeftEdgeX = startX - this.currentAwningWidthPx;
-
-        // 2. Figur wird heller, je geschützter sie ist
-        let brightness = 0.4 + (percentage / 100) * 0.6;
+        let brightness = percentage > 50 ? 1.0 : 0.3 + (percentage / 100) * 0.8;
         this.person.style.setProperty('--person-brightness', brightness);
     }
 
     drawLoop() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // Regentropfen bewegen und zeichnen
         this.ctx.lineWidth = 1.5;
         this.ctx.lineCap = 'round';
 
+        let awningRightEdgeX = this.wallX + this.currentAwningWidthPx;
+
         for (let i = 0; i < this.drops.length; i++) {
             let drop = this.drops[i];
-
-            // Nächste Position berechnen
             let nextX = drop.x + drop.speedX;
             let nextY = drop.y + drop.speedY;
 
-            // KOLLISIONSERKENNUNG MIT DER MARKISE
-            // Wenn der Tropfen die Y-Linie der Markise kreuzt UND er sich X-technisch unter der Markise befindet
-            if (drop.y < this.awningY && nextY >= this.awningY) {
-                if (nextX > this.awningLeftEdgeX && nextX < (window.innerWidth - window.innerWidth * 0.15)) {
-                    // Treffer! Tropfen prallt am Dach ab.
-                    this.createSplash(nextX, this.awningY);
-                    this.drops[i] = this.createDrop(false); // Neuer Tropfen oben
-                    continue; // Diesen Tropfen nicht mehr zeichnen
+            // 1. KOLLISION MIT DEM DACH
+            if (nextX > this.wallX && nextX < awningRightEdgeX) {
+                let distanceFromWall = nextX - this.wallX;
+                let roofYAtThisX = this.awningStartY + Math.tan(this.roofAngleRadians) * distanceFromWall;
+
+                if (drop.y < roofYAtThisX && nextY >= roofYAtThisX) {
+                    this.createSplash(nextX, roofYAtThisX, false);
+                    this.drops[i] = this.createDrop(false);
+                    continue;
                 }
             }
 
-            // Tropfen zeichnen
-            this.ctx.strokeStyle = `rgba(150, 200, 255, ${drop.opacity})`;
+            // 2. KOLLISION MIT DEM GRÜNEN BODEN
+            if (nextY >= this.groundY) {
+                this.createSplash(nextX, this.groundY, true); // Größerer Splash auf dem Boden
+                this.drops[i] = this.createDrop(false);
+                continue;
+            }
+
+            this.ctx.strokeStyle = `rgba(180, 210, 255, ${drop.opacity})`;
             this.ctx.beginPath();
             this.ctx.moveTo(drop.x, drop.y);
             this.ctx.lineTo(nextX, nextY);
             this.ctx.stroke();
 
-            // Position aktualisieren
             drop.x = nextX;
             drop.y = nextY;
 
-            // Zurücksetzen, wenn er unten aus dem Bild fliegt
-            if (drop.y > this.canvas.height || drop.x < 0) {
+            if (drop.x < -100) {
                 this.drops[i] = this.createDrop(false);
             }
         }
 
-        // Splash-Effekte (Wassertropfen, die auf dem Dach zerplatzen) zeichnen
+        // Splashes zeichnen
         for (let j = this.splashes.length - 1; j >= 0; j--) {
             let splash = this.splashes[j];
-            splash.radius += 0.5;
+            splash.radius += 0.8;
+            splash.x -= 1;
             splash.opacity -= 0.05;
 
             if (splash.opacity <= 0) {
                 this.splashes.splice(j, 1);
             } else {
-                this.ctx.strokeStyle = `rgba(200, 230, 255, ${splash.opacity})`;
+                this.ctx.fillStyle = `rgba(200, 230, 255, ${splash.opacity})`;
                 this.ctx.beginPath();
-                this.ctx.arc(splash.x, splash.y - splash.radius, splash.radius, Math.PI, 0); // Halbkreis nach oben
-                this.ctx.stroke();
+                // Wenn der Splash auf dem Boden ist, machen wir einen vollen, flachen Tropfen
+                this.ctx.arc(splash.x, splash.y, splash.radius, 0, Math.PI * 2);
+                this.ctx.fill();
             }
         }
 
@@ -186,7 +191,7 @@ class UIController {
     }
 }
 
-// --- 3. & 4. INPUT MANAGERS ---
+// --- 3. HARDWARE INPUT MANAGER ---
 class ArduinoInputManager {
     constructor(engine) {
         this.engine = engine;
@@ -199,6 +204,12 @@ class ArduinoInputManager {
         this.btn.style.top = "20px";
         this.btn.style.right = "20px";
         this.btn.style.zIndex = "100";
+        this.btn.style.background = "rgba(255,255,255,0.1)";
+        this.btn.style.color = "white";
+        this.btn.style.border = "1px solid rgba(255,255,255,0.3)";
+        this.btn.style.padding = "10px 20px";
+        this.btn.style.cursor = "pointer";
+        this.btn.style.borderRadius = "4px";
         document.body.appendChild(this.btn);
 
         this.btn.addEventListener('click', () => this.connectToArduino());
@@ -238,6 +249,7 @@ class ArduinoInputManager {
     }
 }
 
+// --- 4. KEYBOARD INPUT MANAGER ---
 class KeyboardInputManager {
     constructor(engine) {
         this.engine = engine;
@@ -247,6 +259,7 @@ class KeyboardInputManager {
     }
 }
 
+// --- INITIALISIERUNG ---
 document.addEventListener("DOMContentLoaded", () => {
     const ui = new UIController();
     const engine = new GameEngine(ui);

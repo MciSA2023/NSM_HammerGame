@@ -4,24 +4,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aatm Manthan - Der Schutzraum</title>
+    <title>Aatm Manthan </title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
     <div id="exhibition-scene">
-
         <canvas id="rain-canvas"></canvas>
 
-        <div id="building-wall"></div>
+        <div id="building-wall">
+            <div id="building-window"></div>
+        </div>
 
         <div id="awning">
             <div class="awning-stripes"></div>
         </div>
 
-        <img src="https://via.placeholder.com/150x300/000000/FFFFFF?text=PNG+Figur" id="person-png"
-            alt="Person im Regen">
+        <svg id="person-png" viewBox="0 0 200 500" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="body-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#3a4454" />
+                    <stop offset="40%" stop-color="#1a1e29" />
+                    <stop offset="100%" stop-color="#0a0c14" />
+                </linearGradient>
+            </defs>
+            <path
+                d="M 100 40 C 115 40, 125 55, 125 75 C 125 95, 110 110, 95 110 C 80 110, 75 90, 75 75 C 75 55, 85 40, 100 40 Z"
+                fill="url(#body-gradient)" />
+            <path
+                d="M 95 120 C 130 120, 145 140, 150 170 L 165 480 C 165 495, 150 500, 100 500 C 50 500, 35 495, 35 480 L 50 170 C 55 140, 60 120, 95 120 Z"
+                fill="url(#body-gradient)" />
+            <path d="M 60 170 Q 45 300 70 380" stroke="#0a0c14" stroke-width="4" stroke-linecap="round" fill="none" />
+            <path d="M 140 170 Q 155 300 130 380" stroke="#0a0c14" stroke-width="4" stroke-linecap="round"
+                fill="none" />
+        </svg>
+
+        <div id="ground"></div>
 
         <div id="ui-overlay">
             <div id="percentage-text">0.0 <span class="percent-sign">%</span></div>
