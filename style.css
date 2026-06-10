@@ -59,19 +59,27 @@ body {
 /* --- DIE ZWEITEILIGE FIGUR --- */
 #person-wrapper {
     position: absolute;
-    bottom: 5vh;
+    bottom: -19vh;
     /* Steht auf dem Boden */
     left: 50%;
     transform: translateX(-50%);
     /* Exakt in der Mitte zentriert */
     width: 25vh;
-    height: 50vh;
+    height: 80vh;
     z-index: 4;
 }
 
 /* Beide SVG-Container liegen absolut passgenau übereinander */
-#person-colorful,
+
 #person-cover {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+}
+
+#person-colorful {
     position: absolute;
     top: 0;
     left: 0;
@@ -79,16 +87,20 @@ body {
     height: 100%;
 }
 
+#person-colorful img,
+#person-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+}
+
 #person-cover {
-    /* Magie: 'inset(Top Right Bottom Left)' 
-       Ist die Variable bei 0%, ist das Bild komplett sichtbar.
-       Steigt die Variable auf 100%, ist das Bild von oben her weggeschnitten!
-    */
     clip-path: inset(var(--reveal-percentage, 0%) 0 0 0);
     transition: clip-path 0.1s linear;
 }
 
-/* SVGs passen sich dem Container an */
+
 svg {
     width: 100%;
     height: 100%;
