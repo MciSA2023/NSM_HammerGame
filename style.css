@@ -1,7 +1,7 @@
 body {
     margin: 0;
     padding: 0;
-    background-color: #0a0c14;
+    background-color: #05060c;
     color: #ffffff;
     font-family: 'Segoe UI', Roboto, sans-serif;
     display: flex;
@@ -17,23 +17,36 @@ body {
     height: 100vh;
 }
 
-/* --- DAS WETTER --- */
+/* --- HINTERGRUND & SONNE --- */
 #sky-background {
     position: absolute;
     width: 100%;
     height: 100%;
-    /* Ein sanftes, klares Licht (Die Wahrheit) */
-    background: radial-gradient(circle at 50% 60%, #2980b9 0%, #0a0c14 80%);
+    background: radial-gradient(circle at 50% 50%, #1a2a40 0%, #05060c 100%);
     z-index: 0;
+}
+
+#sun-glow {
+    position: absolute;
+    top: 20vh;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80vh;
+    height: 80vh;
+    background: radial-gradient(circle, rgba(241, 196, 15, 0.4) 0%, rgba(230, 126, 34, 0.1) 50%, transparent 70%);
+    z-index: 1;
+    /* Wird vom JS gesteuert */
+    opacity: var(--sun-opacity, 0);
+    transform: translate(-50%, -50%) scale(var(--sun-scale, 0.5));
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
 }
 
 #storm-overlay {
     position: absolute;
     width: 100%;
     height: 100%;
-    /* Der dunkle Sturm (Wird über JS langsam ausgeblendet) */
-    background: linear-gradient(to bottom, #11141d 0%, #202635 100%);
-    z-index: 1;
+    background: linear-gradient(to bottom, #11141d 0%, #1c222e 100%);
+    z-index: 2;
     transition: opacity 0.2s ease-out;
 }
 
@@ -43,43 +56,86 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 2;
+    z-index: 3;
 }
 
-#ground {
+/* --- DER DOPPELTE BODEN --- */
+#ground-base {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
     height: 5vh;
-    background: linear-gradient(to bottom, #111a1f 0%, #05080a 100%);
-    z-index: 2;
-}
-
-/* --- DIE ZWEITEILIGE FIGUR --- */
-#person-wrapper {
-    position: absolute;
-    bottom: -19vh;
-    /* Steht auf dem Boden */
-    left: 50%;
-    transform: translateX(-50%);
-    /* Exakt in der Mitte zentriert */
-    width: 25vh;
-    height: 80vh;
+    background: linear-gradient(to bottom, #161a24 0%, #090b10 100%);
     z-index: 4;
 }
 
-/* Beide SVG-Container liegen absolut passgenau übereinander */
-
-#person-cover {
+#ground-grass {
     position: absolute;
-    top: 0px;
-    left: 0px;
+    bottom: 0;
+    left: 0;
     width: 100%;
-    height: 100%;
+    height: 5vh;
+    background: linear-gradient(to bottom, #27ae60 0%, #1e7e43 100%);
+    border-top: 2px solid #2ecc71;
+    z-index: 5;
+    /* Blendwert wird live über JS animiert */
+    opacity: var(--grass-opacity, 0);
+    transition: opacity 0.2s ease-out;
 }
 
-#person-colorful {
+/* --- BLUMEN WACHSTUM --- */
+#flowers-container {
+    position: absolute;
+    bottom: 5vh;
+    left: 0;
+    width: 100%;
+    height: 15vh;
+    z-index: 6;
+    pointer-events: none;
+}
+
+.flower {
+    position: absolute;
+    bottom: -2px;
+    height: 100%;
+    width: auto;
+    /* Skaliert sich von unten nach oben hoch basierend auf JS */
+    transform-origin: bottom center;
+    transform: scale(var(--flower-scale, 0));
+    transition: transform 0.1s ease-out;
+}
+
+/* Verteilung der Blumen auf der Wiese */
+.f1 {
+    left: 20vw;
+}
+
+.f2 {
+    left: 32vw;
+}
+
+.f3 {
+    left: 62vw;
+}
+
+.f4 {
+    left: 75vw;
+}
+
+/* --- CHARACTER WRAPPER --- */
+#person-wrapper {
+    position: absolute;
+    bottom: -19vh;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 25vh;
+    height: 80vh;
+    z-index: 7;
+}
+
+#person-colorful,
+#person-cover {
     position: absolute;
     top: 0;
     left: 0;
@@ -98,12 +154,6 @@ body {
 #person-cover {
     clip-path: inset(var(--reveal-percentage, 0%) 0 0 0);
     transition: clip-path 0.1s linear;
-}
-
-
-svg {
-    width: 100%;
-    height: 100%;
 }
 
 /* --- UI --- */

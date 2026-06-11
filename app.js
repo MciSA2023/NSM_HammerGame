@@ -40,7 +40,7 @@ class GameEngine {
     }
 }
 
-// --- 2. UI CONTROLLER (2 Phasen System mit Variablen) ---
+// --- 2. UI CONTROLLER (2 Phasen System mit Variablen & repariertem Regen) ---
 class UIController {
     constructor() {
         this.canvas = document.getElementById('rain-canvas');
@@ -54,12 +54,11 @@ class UIController {
 
         // ========================================================
         // ⚙️ KONFIGURATION DER PHASEN
-        // Hier kannst du das exakte Timing einstellen!
         // ========================================================
         this.config = {
-            rainStopPercent: 20,     // Bei wie viel % der Regen komplett weg ist (z.B. 30%)
-            revealStartPercent: 21,  // Bei wie viel % die Farbe anfängt sichtbar zu werden
-            revealEndPercent: 100     // Bei wie viel % das Bild komplett entschleiert ist
+            rainStopPercent: 20,
+            revealStartPercent: 30,
+            revealEndPercent: 100
         };
         // ========================================================
 
@@ -107,7 +106,7 @@ class UIController {
         this.percentageText.innerHTML = `${percentage.toFixed(1)} <span class="percent-sign">%</span>`;
 
         // ==========================================
-        // PHASE 1: Regen stoppt (Dynamisch über config)
+        // PHASE 1: Regen steuern (Stoppt beim Hochgehen, startet beim Runtergehen)
         // ==========================================
         let rainIntensity = 1.0;
         if (percentage < this.config.rainStopPercent) {
@@ -116,22 +115,32 @@ class UIController {
             rainIntensity = 0;
         }
 
+        // Steuert, wie viele Tropfen aktuell im Bild sein SOLLTEN
         this.targetDrops = Math.floor(300 * rainIntensity);
         this.stormOverlay.style.opacity = rainIntensity;
 
         // ==========================================
-        // PHASE 2: Farbe verschwindet (Dynamisch über config)
+        // PHASE 2: Farbe & Natur (Dynamisch über config)
         // ==========================================
         let revealProgress = 0;
+        let environmentProgress = 0;
+
         if (percentage >= this.config.revealStartPercent) {
             let revealRange = this.config.revealEndPercent - this.config.revealStartPercent;
             revealProgress = ((percentage - this.config.revealStartPercent) / revealRange) * 100;
-
-            // Verhindern, dass der Wert über 100% hinausschießt
             if (revealProgress > 100) revealProgress = 100;
+
+            environmentProgress = revealProgress / 100;
         }
 
         this.personCover.style.setProperty('--reveal-percentage', `${revealProgress}%`);
+        document.documentElement.style.setProperty('--grass-opacity', environmentProgress);
+        document.documentElement.style.setProperty('--sun-opacity', environmentProgress * 0.9);
+        document.documentElement.style.setProperty('--sun-scale', 0.5 + environmentProgress * 0.5);
+
+        let flowerScale = environmentProgress * 1.2;
+        if (flowerScale > 1) flowerScale = 1;
+        document.documentElement.style.setProperty('--flower-scale', flowerScale);
     }
 
     drawLoop() {
@@ -139,19 +148,30 @@ class UIController {
         this.ctx.lineWidth = 1.5;
         this.ctx.lineCap = 'round';
 
+        // REPARATUR: Auffüllen fehlender Tropfen (z.B. beim Verfall)
+        if (this.drops.length < this.targetDrops) {
+            let dropsToAdd = Math.min(5, this.targetDrops - this.drops.length);
+            for (let k = 0; k < dropsToAdd; k++) {
+                this.drops.push(this.createDrop(false)); // Startet sofort an der Oberkante
+            }
+        }
+
         for (let i = 0; i < this.drops.length; i++) {
             let drop = this.drops[i];
             let nextX = drop.x + drop.speedX;
             let nextY = drop.y + drop.speedY;
 
+            // Kollision mit dem Boden
             if (nextY >= this.groundY) {
                 this.createSplash(nextX, this.groundY);
 
+                // Wenn wir zu viele Tropfen haben (beim Hochkurbeln), löschen wir sie
                 if (this.drops.length > this.targetDrops) {
                     this.drops.splice(i, 1);
                     i--;
                     continue;
                 } else {
+                    // Normaler Fall: Tropfen schlägt auf, startet wieder ganz oben
                     this.drops[i] = this.createDrop(false);
                     continue;
                 }
@@ -167,6 +187,7 @@ class UIController {
             drop.y = nextY;
         }
 
+        // Splashes am Boden zeichnen
         for (let j = this.splashes.length - 1; j >= 0; j--) {
             let splash = this.splashes[j];
             splash.radius += 1;
