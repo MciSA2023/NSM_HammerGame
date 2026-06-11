@@ -12,8 +12,30 @@
 
     <div id="exhibition-scene">
         <div id="sky-background"></div>
-        <div id="sun-glow"></div>
         <div id="storm-overlay"></div>
+
+        <div id="sun-rays"></div>
+        <div id="sun-glow"></div>
+
+        <div id="mountain-range">
+            <svg class="mountains" viewBox="0 0 1000 250" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M0 250 L0 150 L60 120 L130 160 L210 90 L280 140 L370 70 L450 130 L540 60 L620 140 L710 80 L800 150 L890 90 L1000 160 L1000 250 Z"
+                    fill="#151b29" />
+                <path
+                    d="M0 250 L0 180 L80 110 L140 150 L220 50 L270 120 L320 80 L390 160 L480 40 L530 110 L600 30 L660 120 L750 60 L820 140 L910 70 L1000 150 L1000 250 Z"
+                    fill="#090d14" />
+            </svg>
+        </div>
+
+        <div id="clouds-container">
+            <svg class="cloud cloud-left" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
+                <path d="M 10 90 Q 20 30 60 40 Q 90 10 130 30 Q 170 20 190 60 Q 200 90 190 100 Z" fill="#0f131c" />
+            </svg>
+            <svg class="cloud cloud-right" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
+                <path d="M 10 80 Q 10 40 50 30 Q 80 0 140 20 Q 180 20 190 70 Q 200 100 180 100 Z" fill="#141824" />
+            </svg>
+        </div>
 
         <canvas id="rain-canvas"></canvas>
 

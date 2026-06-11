@@ -1,3 +1,6 @@
+/* ==========================================================================
+   1. GLOBAL & SETUP
+   ========================================================================== */
 body {
     margin: 0;
     padding: 0;
@@ -17,13 +20,42 @@ body {
     height: 100vh;
 }
 
-/* --- HINTERGRUND & SONNE --- */
+/* ==========================================================================
+   2. HINTERGRUND (Himmel, Sturm & Sonne)
+   ========================================================================== */
 #sky-background {
     position: absolute;
     width: 100%;
     height: 100%;
     background: radial-gradient(circle at 50% 50%, #1a2a40 0%, #05060c 100%);
     z-index: 0;
+}
+
+#storm-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, #0f121a 0%, #1c222e 100%);
+    z-index: 1;
+    /* Sturm verdeckt den Himmel */
+    transition: opacity 0.2s ease-out;
+}
+
+#sun-rays {
+    position: absolute;
+    top: 20vh;
+    left: 50%;
+    width: 150vh;
+    height: 150vh;
+    background: repeating-conic-gradient(from 0deg, rgba(241, 196, 15, 0.15) 0deg 10deg, transparent 10deg 20deg);
+    border-radius: 50%;
+    mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 10%, rgba(0, 0, 0, 0) 60%);
+    -webkit-mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 10%, rgba(0, 0, 0, 0) 60%);
+    z-index: 2;
+    /* Sonne drängt durch den Sturm */
+    opacity: var(--ray-opacity, 0);
+    transition: opacity 0.5s ease-out;
+    animation: spinRays 60s linear infinite;
 }
 
 #sun-glow {
@@ -33,33 +65,83 @@ body {
     transform: translate(-50%, -50%);
     width: 80vh;
     height: 80vh;
-    background: radial-gradient(circle, rgba(241, 196, 15, 0.4) 0%, rgba(230, 126, 34, 0.1) 50%, transparent 70%);
-    z-index: 1;
-    /* Wird vom JS gesteuert */
+    background: radial-gradient(circle, rgba(241, 196, 15, 0.5) 0%, rgba(230, 126, 34, 0.1) 50%, transparent 70%);
+    z-index: 3;
+    /* Leuchten über den Strahlen */
     opacity: var(--sun-opacity, 0);
     transform: translate(-50%, -50%) scale(var(--sun-scale, 0.5));
     transition: opacity 0.2s ease-out, transform 0.2s ease-out;
 }
 
-#storm-overlay {
+/* ==========================================================================
+   3. LANDSCHAFT (Berge & Wolken)
+   ========================================================================== */
+#mountain-range {
     position: absolute;
+    bottom: 5vh;
+    /* Sitzt exakt auf dem Rasen */
+    left: 0;
+    width: 100%;
+    height: 35vh;
+    z-index: 4;
+    /* Vor der Sonne, damit sie dahinter aufgeht */
+    pointer-events: none;
+}
+
+.mountains {
     width: 100%;
     height: 100%;
-    background: linear-gradient(to bottom, #11141d 0%, #1c222e 100%);
-    z-index: 2;
+}
+
+#clouds-container {
+    position: absolute;
+    top: -5vh;
+    left: 0;
+    width: 100%;
+    height: 40vh;
+    z-index: 5;
+    /* Wolken schieben sich vor die Berge */
+    pointer-events: none;
+    opacity: var(--cloud-opacity, 1);
     transition: opacity 0.2s ease-out;
 }
 
+.cloud {
+    position: absolute;
+    width: 70vw;
+    height: auto;
+    filter: blur(25px);
+    /* Macht die Vektoren zu weichem Nebel */
+    transition: transform 0.1s linear;
+}
+
+.cloud-left {
+    left: -20vw;
+    top: -5vh;
+    transform: translateX(calc(var(--cloud-parting, 0) * -50vw));
+    animation: floatCloud 8s ease-in-out infinite alternate;
+}
+
+.cloud-right {
+    right: -20vw;
+    top: -10vh;
+    transform: translateX(calc(var(--cloud-parting, 0) * 50vw));
+    animation: floatCloud 11s ease-in-out infinite alternate-reverse;
+}
+
+/* ==========================================================================
+   4. WETTER & BODEN
+   ========================================================================== */
 #rain-canvas {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 3;
+    z-index: 6;
+    /* Regen fällt vor Bergen und Wolken */
 }
 
-/* --- DER DOPPELTE BODEN --- */
 #ground-base {
     position: absolute;
     bottom: 0;
@@ -67,7 +149,7 @@ body {
     width: 100%;
     height: 5vh;
     background: linear-gradient(to bottom, #161a24 0%, #090b10 100%);
-    z-index: 4;
+    z-index: 7;
 }
 
 #ground-grass {
@@ -78,20 +160,23 @@ body {
     height: 5vh;
     background: linear-gradient(to bottom, #27ae60 0%, #1e7e43 100%);
     border-top: 2px solid #2ecc71;
-    z-index: 5;
-    /* Blendwert wird live über JS animiert */
+    z-index: 8;
+    /* Gras blendet sich über den Matsch */
     opacity: var(--grass-opacity, 0);
     transition: opacity 0.2s ease-out;
 }
 
-/* --- BLUMEN WACHSTUM --- */
+/* ==========================================================================
+   5. BLUMEN WACHSTUM
+   ========================================================================== */
 #flowers-container {
     position: absolute;
     bottom: 5vh;
     left: 0;
     width: 100%;
     height: 15vh;
-    z-index: 6;
+    z-index: 9;
+    /* Blumen wachsen aus dem Gras hervor */
     pointer-events: none;
 }
 
@@ -100,13 +185,11 @@ body {
     bottom: -2px;
     height: 100%;
     width: auto;
-    /* Skaliert sich von unten nach oben hoch basierend auf JS */
     transform-origin: bottom center;
     transform: scale(var(--flower-scale, 0));
     transition: transform 0.1s ease-out;
 }
 
-/* Verteilung der Blumen auf der Wiese */
 .f1 {
     left: 20vw;
 }
@@ -123,7 +206,9 @@ body {
     left: 75vw;
 }
 
-/* --- CHARACTER WRAPPER --- */
+/* ==========================================================================
+   6. CHARACTER WRAPPER
+   ========================================================================== */
 #person-wrapper {
     position: absolute;
     bottom: -19vh;
@@ -131,7 +216,8 @@ body {
     transform: translateX(-50%);
     width: 25vh;
     height: 80vh;
-    z-index: 7;
+    z-index: 10;
+    /* Figur steht ganz vorne */
 }
 
 #person-colorful,
@@ -156,7 +242,9 @@ body {
     transition: clip-path 0.1s linear;
 }
 
-/* --- UI --- */
+/* ==========================================================================
+   7. UI OVERLAY
+   ========================================================================== */
 #ui-overlay {
     position: absolute;
     bottom: 10vh;
@@ -164,7 +252,8 @@ body {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    z-index: 10;
+    z-index: 11;
+    /* UI ist immer zuoberst */
 }
 
 #percentage-text {
@@ -189,4 +278,27 @@ body {
 #milestone-message.show {
     opacity: 1;
     transform: translateY(0);
+}
+
+/* ==========================================================================
+   8. KEYFRAME ANIMATIONEN
+   ========================================================================== */
+@keyframes spinRays {
+    from {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+@keyframes floatCloud {
+    from {
+        margin-top: 0px;
+    }
+
+    to {
+        margin-top: 30px;
+    }
 }
