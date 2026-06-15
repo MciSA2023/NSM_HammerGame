@@ -40,7 +40,7 @@ class GameEngine {
     }
 }
 
-// --- 2. UI CONTROLLER (2 Phasen System mit Variablen & repariertem Regen) ---
+// --- 2. UI CONTROLLER (Gestaffelte Timeline: Wolken -> Regen -> Abfluss) ---
 class UIController {
     constructor() {
         this.canvas = document.getElementById('rain-canvas');
@@ -50,22 +50,17 @@ class UIController {
         this.percentageText = document.getElementById('percentage-text');
         this.milestoneMessage = document.getElementById('milestone-message');
 
-        this.words = ["RUHE", "FOKUS", "KLARHEIT", "STILLE", "ERWACHEN", "LIEBE", "FRIEDEN", "ERKENNTNIS", "AATM MANTHAN"];
+        this.lightning = document.createElement('div');
+        this.lightning.id = 'lightning-flash';
+        document.getElementById('exhibition-scene').appendChild(this.lightning);
 
-        // ========================================================
-        // ⚙️ KONFIGURATION DER PHASEN
-        // ========================================================
-        this.config = {
-            rainStopPercent: 20,
-            revealStartPercent: 30,
-            revealEndPercent: 100
-        };
-        // ========================================================
+        this.words = ["RUHE", "FOKUS", "KLARHEIT", "STILLE", "ERWACHEN", "LIEBE", "FRIEDEN", "ERKENNTNIS", "AATM MANTHAN"];
 
         this.drops = [];
         this.splashes = [];
         this.groundY = 0;
-        this.targetDrops = 300; // Maximale Regenmenge zu Beginn
+        this.targetDrops = 0;
+        this.currentPercentage = 0; // Speichern wir für die Blitze
 
         this.initCanvas();
         window.addEventListener('resize', () => this.initCanvas());
@@ -76,11 +71,7 @@ class UIController {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
         this.groundY = this.canvas.height * 0.95;
-
         this.drops = [];
-        for (let i = 0; i < this.targetDrops; i++) {
-            this.drops.push(this.createDrop());
-        }
     }
 
     createDrop(startAtTop = true) {
@@ -104,43 +95,53 @@ class UIController {
 
     updateScene(percentage) {
         this.percentageText.innerHTML = `${percentage.toFixed(1)} <span class="percent-sign">%</span>`;
+        this.currentPercentage = percentage;
+
+        // Wir zerteilen die 100% in drei aufeinanderfolgende Phasen (Werte von 0.0 bis 1.0)
+        let cloudProgress = Math.min(percentage / 25, 1.0);
+        let rainProgress = percentage >= 25 ? Math.min((percentage - 25) / 25, 1.0) : 0;
+        let decayProgress = percentage >= 50 ? Math.min((percentage - 50) / 50, 1.0) : 0;
 
         // ==========================================
-        // PHASE 1: Regen steuern (Stoppt beim Hochgehen, startet beim Runtergehen)
+        // PHASE 1: WOLKEN & SONNE (0% bis 25%)
         // ==========================================
-        let rainIntensity = 1.0;
-        if (percentage < this.config.rainStopPercent) {
-            rainIntensity = 1.0 - (percentage / this.config.rainStopPercent);
-        } else {
-            rainIntensity = 0;
-        }
+        // Wolken ziehen zu (1 = ganz offen, 0 = ganz geschlossen)
+        document.documentElement.style.setProperty('--cloud-parting', 1.0 - cloudProgress);
+        document.documentElement.style.setProperty('--cloud-opacity', 0.2 + (cloudProgress * 0.8));
 
-        // Steuert, wie viele Tropfen aktuell im Bild sein SOLLTEN
-        this.targetDrops = Math.floor(300 * rainIntensity);
-        this.stormOverlay.style.opacity = rainIntensity;
+        // Sonne faded aus
+        let sunVisible = 1.0 - cloudProgress;
+        document.documentElement.style.setProperty('--sun-opacity', sunVisible * 0.9);
+        document.documentElement.style.setProperty('--sun-scale', 0.5 + (sunVisible * 0.5));
+        document.documentElement.style.setProperty('--ray-opacity', sunVisible * 0.8);
 
         // ==========================================
-        // PHASE 2: Farbe & Natur (Dynamisch über config)
+        // PHASE 2: REGEN (25% bis 50%)
         // ==========================================
-        let revealProgress = 0;
-        let environmentProgress = 0;
+        this.targetDrops = Math.floor(500 * rainProgress);
 
-        if (percentage >= this.config.revealStartPercent) {
-            let revealRange = this.config.revealEndPercent - this.config.revealStartPercent;
-            revealProgress = ((percentage - this.config.revealStartPercent) / revealRange) * 100;
-            if (revealProgress > 100) revealProgress = 100;
+        // ==========================================
+        // PHASE 3: ABFLUSS & DÜSTERNIS (50% bis 100%)
+        // ==========================================
+        let environmentAlive = 1.0 - decayProgress;
 
-            environmentProgress = revealProgress / 100;
-        }
+        // Der Sturm wird stufenweise dunkler (Wolken + Regen + Endphase)
+        this.stormOverlay.style.opacity = (cloudProgress * 0.2) + (rainProgress * 0.3) + (decayProgress * 0.5);
 
-        this.personCover.style.setProperty('--reveal-percentage', `${revealProgress}%`);
-        document.documentElement.style.setProperty('--grass-opacity', environmentProgress);
-        document.documentElement.style.setProperty('--sun-opacity', environmentProgress * 0.9);
-        document.documentElement.style.setProperty('--sun-scale', 0.5 + environmentProgress * 0.5);
+        // Der strahlende Tag-Himmel verschwindet
+        document.documentElement.style.setProperty('--day-opacity', environmentAlive);
 
-        let flowerScale = environmentProgress * 1.2;
+        // Innsbruck, Gras und Blumen verblassen in Grau
+        document.documentElement.style.setProperty('--grass-opacity', environmentAlive);
+        document.documentElement.style.setProperty('--city-color', environmentAlive);
+
+        let flowerScale = environmentAlive * 1.2;
         if (flowerScale > 1) flowerScale = 1;
         document.documentElement.style.setProperty('--flower-scale', flowerScale);
+
+        // Die Figur leert sich (0 bis 100)
+        let revealRaw = decayProgress * 100;
+        this.personCover.style.setProperty('--reveal-raw', revealRaw);
     }
 
     drawLoop() {
@@ -148,11 +149,17 @@ class UIController {
         this.ctx.lineWidth = 1.5;
         this.ctx.lineCap = 'round';
 
-        // REPARATUR: Auffüllen fehlender Tropfen (z.B. beim Verfall)
+        // --- BLITZ LOGIK (Erst in der absoluten Endphase ab 85%) ---
+        if (this.currentPercentage > 85 && Math.random() < 0.03) {
+            this.lightning.style.opacity = 0.8 + Math.random() * 0.2;
+            setTimeout(() => { this.lightning.style.opacity = 0; }, 50);
+        }
+
+        // Regen Auffüllen
         if (this.drops.length < this.targetDrops) {
             let dropsToAdd = Math.min(5, this.targetDrops - this.drops.length);
             for (let k = 0; k < dropsToAdd; k++) {
-                this.drops.push(this.createDrop(false)); // Startet sofort an der Oberkante
+                this.drops.push(this.createDrop(false));
             }
         }
 
@@ -161,17 +168,14 @@ class UIController {
             let nextX = drop.x + drop.speedX;
             let nextY = drop.y + drop.speedY;
 
-            // Kollision mit dem Boden
             if (nextY >= this.groundY) {
                 this.createSplash(nextX, this.groundY);
 
-                // Wenn wir zu viele Tropfen haben (beim Hochkurbeln), löschen wir sie
                 if (this.drops.length > this.targetDrops) {
                     this.drops.splice(i, 1);
                     i--;
                     continue;
                 } else {
-                    // Normaler Fall: Tropfen schlägt auf, startet wieder ganz oben
                     this.drops[i] = this.createDrop(false);
                     continue;
                 }
@@ -187,7 +191,6 @@ class UIController {
             drop.y = nextY;
         }
 
-        // Splashes am Boden zeichnen
         for (let j = this.splashes.length - 1; j >= 0; j--) {
             let splash = this.splashes[j];
             splash.radius += 1;
@@ -215,7 +218,7 @@ class UIController {
 }
 
 
-// --- 3. HARDWARE INPUT MANAGER ---
+// --- 3. HARDWARE INPUT MANAGER (Für 600 PPR Rotary Encoder) ---
 class ArduinoInputManager {
     constructor(engine) {
         this.engine = engine;
@@ -242,7 +245,7 @@ class ArduinoInputManager {
         if ('serial' in navigator) {
             try {
                 this.port = await navigator.serial.requestPort();
-                await this.port.open({ baudRate: 115200 });
+                await this.port.open({ baudRate: 115200 }); // Muss mit dem Arduino Code übereinstimmen
                 this.btn.style.display = "none";
                 const textDecoder = new TextDecoderStream();
                 this.port.readable.pipeTo(textDecoder.writable);
@@ -262,9 +265,26 @@ class ArduinoInputManager {
             if (value) {
                 buffer += value;
                 let lines = buffer.split("\n");
-                buffer = lines.pop();
+                buffer = lines.pop(); // Behalte unfertige Zeilen im Puffer
+
                 for (let line of lines) {
-                    if (line.trim() === "TICK") { this.engine.addSpin(25); }
+                    line = line.trim();
+
+                    // NEU: Reagiert auf "SPIN:15" etc.
+                    if (line.startsWith("SPIN:")) {
+                        // Schneide das "SPIN:" ab und mache eine Zahl daraus
+                        let pulses = parseInt(line.split(":")[1]);
+
+                        // Hier kannst du die Empfindlichkeit der Kurbel einstellen!
+                        // Wenn es zu schnell geht, mach * 0.5. Wenn zu langsam, * 2.
+                        let spinPower = pulses * 0.5;
+
+                        this.engine.addSpin(spinPower);
+                    }
+                    // Fallback, falls du die Tastatur (W-Taste) benutzt
+                    else if (line === "TICK") {
+                        this.engine.addSpin(25);
+                    }
                 }
             }
         }

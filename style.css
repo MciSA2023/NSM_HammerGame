@@ -211,17 +211,21 @@ body {
    ========================================================================== */
 #person-wrapper {
     position: absolute;
-    bottom: -19vh;
-    left: 50%;
+    /* Wieder auf den Rasen gestellt (passe das an, wenn sie schwebt) */
+    bottom: -27vh;
+    left: 47%;
     transform: translateX(-50%);
-    width: 25vh;
-    height: 80vh;
+
+    /* HIER machst du die Figur größer oder kleiner! */
+    width: 45vh;
+    /* Vorher 25vh - Jetzt fast doppelt so breit */
+    height: 120vh;
+    /* Vorher 80vh - Jetzt deutlich größer */
+
     z-index: 10;
-    /* Figur steht ganz vorne */
 }
 
-#person-colorful,
-#person-cover {
+#person-colorful {
     position: absolute;
     top: 0;
     left: 0;
@@ -229,6 +233,7 @@ body {
     height: 100%;
 }
 
+/* WICHTIG: Bilder müssen auf 100% bleiben, damit der Wischeffekt nicht bricht! */
 #person-colorful img,
 #person-cover img {
     width: 100%;
@@ -237,9 +242,49 @@ body {
     pointer-events: none;
 }
 
+/* --- Der fließende Wasserstand (Container leert sich) --- */
+/* --- Das fließende Wasser mit echten Wellen --- */
+/* --- Das fließende Wasser mit echten Wellen --- */
 #person-cover {
-    clip-path: inset(var(--reveal-percentage, 0%) 0 0 0);
-    transition: clip-path 0.1s linear;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    /* 1. Die SVG-Maske mit den Wellen oben */
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 1000' preserveAspectRatio='none'%3E%3Cpath d='M0,50 C150,150 350,-50 500,50 C650,150 850,-50 1000,50 L1000,1500 L0,1500 Z' fill='black'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 1000' preserveAspectRatio='none'%3E%3Cpath d='M0,50 C150,150 350,-50 500,50 C650,150 850,-50 1000,50 L1000,1500 L0,1500 Z' fill='black'/%3E%3C/svg%3E");
+
+    /* 2. Größe anpassen */
+    -webkit-mask-size: 200% 150%;
+    mask-size: 200% 150%;
+
+    /* WICHTIG: Die Wellen dürfen sich nur seitlich (X) wiederholen, nicht nach unten! */
+    -webkit-mask-repeat: repeat-x;
+    mask-repeat: repeat-x;
+
+    /* 3. REPARATUR: Hier nutzen wir jetzt die reine Zahl zum Rechnen (z.B. 50 * 1.25vh) */
+    -webkit-mask-position-y: calc(var(--reveal-raw, 0) * 1.25vh);
+    mask-position-y: calc(var(--reveal-raw, 0) * 1.25vh);
+
+    /* 4. Das seitliche Schwappen */
+    animation: waveRipple 2.5s linear infinite;
+}
+
+/* (Deine @keyframes waveRipple bleiben genau so, wie du sie schon hattest) */
+
+/* Die Keyframes erzeugen das stetige Fließen der Wellen von links nach rechts */
+@keyframes waveRipple {
+    0% {
+        -webkit-mask-position-x: 0%;
+        mask-position-x: 0%;
+    }
+
+    100% {
+        -webkit-mask-position-x: 100%;
+        mask-position-x: 100%;
+    }
 }
 
 /* ==========================================================================
@@ -301,4 +346,34 @@ body {
     to {
         margin-top: 30px;
     }
+}
+
+/* --- NEU: BLITZLICHTGEWITTER --- */
+#lightning-flash {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #ffffff;
+    z-index: 20;
+    /* Ganz vorne, überdeckt alles kurzzeitig */
+    opacity: 0;
+    pointer-events: none;
+    /* Der Fade-Out des Blitzes geht extrem schnell */
+    transition: opacity 0.1s ease-out;
+}
+
+#day-sky {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Ein strahlendes, helles Sonnenschein-Blau */
+    background: linear-gradient(to bottom, #4facfe 0%, #00f2fe 100%);
+    z-index: 1;
+    /* WICHTIG: Über dem dunklen Hintergrund! */
+    opacity: var(--day-opacity, 1);
+    transition: opacity 0.1s linear;
 }
