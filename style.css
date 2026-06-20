@@ -23,11 +23,17 @@ body {
 /* ==========================================================================
    2. HINTERGRUND (Himmel, Sturm & Sonne)
    ========================================================================== */
-#sky-background {
+
+
+#scenery-bg {
     position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    background: radial-gradient(circle at 50% 50%, #1a2a40 0%, #05060c 100%);
+    background-image: url('scenery.png');
+    background-size: cover;
+    background-position: center bottom;
     z-index: 0;
 }
 
@@ -35,9 +41,8 @@ body {
     position: absolute;
     width: 100%;
     height: 100%;
-    background: linear-gradient(to bottom, #0f121a 0%, #1c222e 100%);
+    background: linear-gradient(to bottom, rgba(15, 18, 26, 0.8) 0%, rgba(28, 34, 46, 0.95) 100%);
     z-index: 1;
-    /* Sturm verdeckt den Himmel */
     transition: opacity 0.2s ease-out;
 }
 
@@ -56,6 +61,8 @@ body {
     opacity: var(--ray-opacity, 0);
     transition: opacity 0.5s ease-out;
     animation: spinRays 60s linear infinite;
+    mix-blend-mode: screen;
+    z-index: 2;
 }
 
 #sun-glow {
@@ -71,6 +78,8 @@ body {
     opacity: var(--sun-opacity, 0);
     transform: translate(-50%, -50%) scale(var(--sun-scale, 0.5));
     transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+    mix-blend-mode: screen;
+    z-index: 2;
 }
 
 /* ==========================================================================
@@ -108,29 +117,30 @@ body {
 
 .cloud {
     position: absolute;
-    width: 70vw;
+    width: 60vw;
+    /* Wolken schön groß machen */
     height: auto;
-    filter: blur(25px);
-    /* Macht die Vektoren zu weichem Nebel */
+    filter: blur(2px);
+    /* Nur noch minimal weichzeichnen, da es jetzt ein Bild ist */
     transition: transform 0.1s linear;
 }
 
 .cloud-left {
-    left: -20vw;
-    top: -5vh;
+    left: -10vw;
+    top: -25vh;
     transform: translateX(calc(var(--cloud-parting, 0) * -50vw));
     animation: floatCloud 8s ease-in-out infinite alternate;
 }
 
 .cloud-right {
-    right: -20vw;
-    top: -10vh;
+    right: -10vw;
+    top: -35vh;
     transform: translateX(calc(var(--cloud-parting, 0) * 50vw));
     animation: floatCloud 11s ease-in-out infinite alternate-reverse;
 }
 
 /* ==========================================================================
-   4. WETTER & BODEN
+   4. WETTER & PNG-BODEN (Endloses Spiegel-Laufband)
    ========================================================================== */
 #rain-canvas {
     position: absolute;
@@ -139,31 +149,88 @@ body {
     width: 100%;
     height: 100%;
     z-index: 6;
-    /* Regen fällt vor Bergen und Wolken */
 }
 
-#ground-base {
+/* Der Container, der alles abgrenzt */
+.ground-layer {
     position: absolute;
     bottom: 0;
     left: 0;
-    width: 100%;
-    height: 5vh;
-    background: linear-gradient(to bottom, #161a24 0%, #090b10 100%);
+    width: 100vw;
+    height: 40vh;
+    /* Höhe deines Grases */
+    overflow: hidden;
+}
+
+#ground-night {
     z-index: 7;
 }
 
-#ground-grass {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 5vh;
-    background: linear-gradient(to bottom, #27ae60 0%, #1e7e43 100%);
-    border-top: 2px solid #2ecc71;
+#ground-day {
     z-index: 8;
-    /* Gras blendet sich über den Matsch */
-    opacity: var(--grass-opacity, 0);
-    transition: opacity 0.2s ease-out;
+    opacity: var(--day-opacity, 1);
+    transition: opacity 0.1s linear;
+}
+
+/* --- DAS GRAS-LAUFBAND --- */
+.ground-track {
+    display: flex;
+    width: 400vw;
+    height: 100%;
+    gap: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+
+    /* NEU: Wird vom JavaScript geschoben! */
+    transform: translateX(calc(var(--scroll-ground, 0) * -1vw));
+
+    /* Ein minimaler Smoother, damit es beim Kurbeln flüssig wirkt */
+    transition: transform 0.1s linear;
+}
+
+.ground-img {
+    width: 100vw;
+    height: 100%;
+
+    /* Der Anti-Spalt-Trick: 102% Breite schneidet transparente Ränder weg */
+    background-size: 102% 130%;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+    margin-right: -2px;
+    /* Zieht die Kanten nahtlos übereinander */
+}
+
+/* Spiegel-Magie für den perfekten, ruckelfreien Übergang */
+.mirrored {
+    transform: scaleX(-1);
+}
+
+/* Die Bildzuweisungen */
+.night {
+    background-image: url('/grass/nighgrass.png');
+}
+
+.day {
+    background-image: url('/grass/grassinday.png');
+}
+
+/* ==========================================================================
+   DIE ENDLOS-ANIMATION
+   ========================================================================== */
+@keyframes scrollGround {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        /* Verschiebung um exakt 2 Bilder (200vw). 
+           Dadurch ist der Rücksprung auf Null mathematisch zu 100% unsichtbar! */
+        transform: translateX(-200vw);
+    }
 }
 
 /* ==========================================================================
@@ -207,22 +274,25 @@ body {
 }
 
 /* ==========================================================================
-   6. CHARACTER WRAPPER
+   6. CHARACTER WRAPPER & WASSER-FILL
    ========================================================================== */
 #person-wrapper {
     position: absolute;
-    /* Wieder auf den Rasen gestellt (passe das an, wenn sie schwebt) */
-    bottom: -27vh;
-    left: 47%;
+    bottom: 2vh;
+    left: 50%;
     transform: translateX(-50%);
 
-    /* HIER machst du die Figur größer oder kleiner! */
     width: 45vh;
-    /* Vorher 25vh - Jetzt fast doppelt so breit */
-    height: 120vh;
-    /* Vorher 80vh - Jetzt deutlich größer */
-
+    height: 100vh;
     z-index: 10;
+
+    /* DER SCHABLONEN-TRICK: 
+       Schneidet das Wasser (und alles andere) exakt an den Rändern der Silhouette ab! 
+       (Passe den Pfad an, falls dein Bild woanders liegt) */
+    -webkit-mask-image: url('assets/character/Colourfullpeople.png');
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: bottom center;
 }
 
 #person-colorful {
@@ -231,20 +301,14 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
+
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: bottom center;
 }
 
-/* WICHTIG: Bilder müssen auf 100% bleiben, damit der Wischeffekt nicht bricht! */
-#person-colorful img,
-#person-cover img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    pointer-events: none;
-}
-
-/* --- Der fließende Wasserstand (Container leert sich) --- */
-/* --- Das fließende Wasser mit echten Wellen --- */
-/* --- Das fließende Wasser mit echten Wellen --- */
+/* --- DAS BLAUE WASSER --- */
+/* --- DAS BLAUE WASSER (Das abfließt) --- */
 #person-cover {
     position: absolute;
     top: 0;
@@ -252,33 +316,29 @@ body {
     width: 100%;
     height: 100%;
 
-    /* 1. Die SVG-Maske mit den Wellen oben */
+    /* Das Blau des Wassers */
+    background-color: rgba(0, 162, 255, 0.9);
+
+    /* Die SVG-Wellen-Maske */
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 1000' preserveAspectRatio='none'%3E%3Cpath d='M0,50 C150,150 350,-50 500,50 C650,150 850,-50 1000,50 L1000,1500 L0,1500 Z' fill='black'/%3E%3C/svg%3E");
     mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 1000' preserveAspectRatio='none'%3E%3Cpath d='M0,50 C150,150 350,-50 500,50 C650,150 850,-50 1000,50 L1000,1500 L0,1500 Z' fill='black'/%3E%3C/svg%3E");
 
-    /* 2. Größe anpassen */
     -webkit-mask-size: 200% 150%;
     mask-size: 200% 150%;
-
-    /* WICHTIG: Die Wellen dürfen sich nur seitlich (X) wiederholen, nicht nach unten! */
     -webkit-mask-repeat: repeat-x;
     mask-repeat: repeat-x;
 
-    /* 3. REPARATUR: Hier nutzen wir jetzt die reine Zahl zum Rechnen (z.B. 50 * 1.25vh) */
-    -webkit-mask-position-y: calc(var(--reveal-raw, 0) * 1.25vh);
-    mask-position-y: calc(var(--reveal-raw, 0) * 1.25vh);
+    /* Die umgedrehte Mathematik: Leert sich von oben nach unten */
+    -webkit-mask-position-y: calc(var(--reveal-raw, 0) * 1.2vh);
+    mask-position-y: calc(var(--reveal-raw, 0) * 1.2vh);
 
-    /* 4. Das seitliche Schwappen */
     animation: waveRipple 2.5s linear infinite;
 }
 
-/* (Deine @keyframes waveRipple bleiben genau so, wie du sie schon hattest) */
-
-/* Die Keyframes erzeugen das stetige Fließen der Wellen von links nach rechts */
 @keyframes waveRipple {
     0% {
-        -webkit-mask-position-x: 0%;
-        mask-position-x: 0%;
+        -webkit-mask-position-x: 30%;
+        mask-position-x: 30%;
     }
 
     100% {
@@ -376,4 +436,129 @@ body {
     /* WICHTIG: Über dem dunklen Hintergrund! */
     opacity: var(--day-opacity, 1);
     transition: opacity 0.1s linear;
+}
+
+/* ==========================================================================
+   DIE BERGE (Parallax & Dynamisches Wetter)
+   ========================================================================== */
+.parallax-layer {
+    position: absolute;
+    left: 0;
+    width: 100vw;
+    z-index: 3;
+    /* Vor der Sonne (2), hinter Wolken (5) und Gras (7/8) */
+    overflow: hidden;
+
+    /* DAS DYNAMISCHE WETTER: 
+       Rechnet die Farbe stufenlos um, wenn das Wetter umschlägt!
+       (Tag = Hell & Bunt | Sturm = Dunkel & Grau) */
+    filter: brightness(calc(0.4 + (var(--day-opacity, 1) * 0.6))) grayscale(calc(1 - var(--day-opacity, 1)));
+
+    transition: filter 0.1s linear;
+}
+
+/* Die Höhen-Staffelung & Tiefenwirkung (Atmosphärische Perspektive) */
+/* Hinten: Sehr groß, taucht leicht ins Gras ein, durchsichtiger (heller) */
+#bg-mountains-back {
+    bottom: 18vh;
+    height: 60vh;
+    opacity: 0.5;
+}
+
+/* Mitte: Etwas kleiner, sattere Farbe */
+#bg-mountains-mid {
+    bottom: 12vh;
+    height: 50vh;
+    opacity: 0.8;
+}
+
+/* Vorne: Kleinste Ebene, volle Deckkraft (dunkelster Berg) */
+#bg-mountains-front {
+    bottom: 8vh;
+    height: 35vh;
+    opacity: 1.0;
+}
+
+/* --- DAS LAUFBAND --- */
+.mountain-track {
+    display: flex;
+    width: 400vw;
+    height: 100%;
+    gap: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.mountain-img {
+    width: 100vw;
+    height: 100%;
+    background-size: 105% 100%;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    flex-shrink: 0;
+    margin-right: -2px;
+}
+
+.mirrored {
+    transform: scaleX(-1);
+}
+
+/* --- DIE BILDER --- */
+/* Wichtig: Nutze hier am besten freigestellte, transparente PNGs! */
+.m3 {
+    background-image: url('/assets/background/Mountain\ 1.png');
+}
+
+.m2 {
+    background-image: url('/assets/background/Mountain\ 2.png');
+}
+
+.m1 {
+    background-image: url('/assets/background/Mountain\ 3.png');
+}
+
+/* ==========================================================================
+   DIE ENDLOS-ANIMATIONEN
+   ========================================================================== */
+.track-fast {
+    transform: translateX(calc(var(--scroll-m-fast, 0) * -1vw));
+    transition: transform 0.1s linear;
+}
+
+.track-mid {
+    transform: translateX(calc(var(--scroll-m-mid, 0) * -1vw));
+    transition: transform 0.1s linear;
+}
+
+.track-slow {
+    transform: translateX(calc(var(--scroll-m-slow, 0) * -1vw));
+    transition: transform 0.1s linear;
+}
+
+@keyframes scrollMountains {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-200vw);
+    }
+}
+
+@keyframes walkingBob {
+
+    0%,
+    100% {
+        transform: translateX(-50%) translateY(0);
+    }
+
+    50% {
+        transform: translateX(-50%) translateY(-1.5vh);
+    }
+
+    /* Ein kleiner Schritt nach oben */
+}
+
+#person-wrapper.is-walking {
+    animation: walkingBob 0.4s ease-in-out infinite;
 }

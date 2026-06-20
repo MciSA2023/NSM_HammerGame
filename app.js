@@ -94,54 +94,79 @@ class UIController {
     }
 
     updateScene(percentage) {
+        // UI Text-Update
         this.percentageText.innerHTML = `${percentage.toFixed(1)} <span class="percent-sign">%</span>`;
         this.currentPercentage = percentage;
 
-        // Wir zerteilen die 100% in drei aufeinanderfolgende Phasen (Werte von 0.0 bis 1.0)
-        let cloudProgress = Math.min(percentage / 25, 1.0);
-        let rainProgress = percentage >= 25 ? Math.min((percentage - 25) / 25, 1.0) : 0;
-        let decayProgress = percentage >= 50 ? Math.min((percentage - 50) / 50, 1.0) : 0;
+        // ==============================================================
+        // 1. DAS INNERE WACHSTUM (Figur leert das Wasser nach unten)
+        // ==============================================================
+        if (this.personCover) {
+            this.personCover.style.setProperty('--reveal-raw', percentage);
+        }
 
-        // ==========================================
-        // PHASE 1: WOLKEN & SONNE (0% bis 25%)
-        // ==========================================
-        // Wolken ziehen zu (1 = ganz offen, 0 = ganz geschlossen)
-        document.documentElement.style.setProperty('--cloud-parting', 1.0 - cloudProgress);
-        document.documentElement.style.setProperty('--cloud-opacity', 0.2 + (cloudProgress * 0.8));
+        // ==============================================================
+        // 2. DAS ÄUSSERE WETTER (Linear von 0% Sturm zu 100% Sonne)
+        // ==============================================================
+        let progress = percentage / 100;
 
-        // Sonne faded aus
-        let sunVisible = 1.0 - cloudProgress;
-        document.documentElement.style.setProperty('--sun-opacity', sunVisible * 0.9);
-        document.documentElement.style.setProperty('--sun-scale', 0.5 + (sunVisible * 0.5));
-        document.documentElement.style.setProperty('--ray-opacity', sunVisible * 0.8);
+        // Licht, Gras & Berge (werden stetig bunter)
+        document.documentElement.style.setProperty('--day-opacity', progress);
 
-        // ==========================================
-        // PHASE 2: REGEN (25% bis 50%)
-        // ==========================================
-        this.targetDrops = Math.floor(500 * rainProgress);
+        // Die Sonne (bricht stetig durch)
+        document.documentElement.style.setProperty('--sun-opacity', progress);
+        document.documentElement.style.setProperty('--ray-opacity', progress);
+        document.documentElement.style.setProperty('--sun-scale', 0.5 + (progress * 0.5));
 
-        // ==========================================
-        // PHASE 3: ABFLUSS & DÜSTERNIS (50% bis 100%)
-        // ==========================================
-        let environmentAlive = 1.0 - decayProgress;
+        // Wolken (verziehen sich nach außen)
+        document.documentElement.style.setProperty('--cloud-parting', progress);
+        document.documentElement.style.setProperty('--cloud-opacity', 1.0 - progress);
 
-        // Der Sturm wird stufenweise dunkler (Wolken + Regen + Endphase)
-        this.stormOverlay.style.opacity = (cloudProgress * 0.2) + (rainProgress * 0.3) + (decayProgress * 0.5);
+        // Regen (hört kurz vor 100% komplett auf)
+        let rainIntensity = 1.0 - (progress * 1.2);
+        if (rainIntensity < 0) rainIntensity = 0;
+        this.targetDrops = Math.floor(600 * rainIntensity);
 
-        // Der strahlende Tag-Himmel verschwindet
-        document.documentElement.style.setProperty('--day-opacity', environmentAlive);
+        // ==============================================================
+        // 3. DIE WELT-BEWEGUNG (Direkt linear an 0-100% gekoppelt!)
+        // ==============================================================
 
-        // Innsbruck, Gras und Blumen verblassen in Grau
-        document.documentElement.style.setProperty('--grass-opacity', environmentAlive);
-        document.documentElement.style.setProperty('--city-color', environmentAlive);
+        // Wipp-Animation (Gehen) triggern, wenn sich der Wert verändert
+        if (typeof this.lastPercentage === 'undefined') {
+            this.lastPercentage = percentage;
+        }
 
-        let flowerScale = environmentAlive * 1.2;
-        if (flowerScale > 1) flowerScale = 1;
-        document.documentElement.style.setProperty('--flower-scale', flowerScale);
+        let delta = percentage - this.lastPercentage;
+        this.lastPercentage = percentage;
 
-        // Die Figur leert sich (0 bis 100)
-        let revealRaw = decayProgress * 100;
-        this.personCover.style.setProperty('--reveal-raw', revealRaw);
+        if (Math.abs(delta) > 0.01) {
+            const personWrapper = document.getElementById('person-wrapper');
+            if (personWrapper) {
+                personWrapper.classList.add('is-walking');
+            }
+
+            // Stoppt das Wippen, wenn 150ms lang nicht gekurbelt wird
+            clearTimeout(this.walkTimeout);
+            this.walkTimeout = setTimeout(() => {
+                if (personWrapper) {
+                    personWrapper.classList.remove('is-walking');
+                }
+            }, 150);
+        }
+
+        // --- DER LINEARE WEG (Kein Loop = Absolut ruckelfrei!) ---
+        // Wir rechnen die Prozente (0-100) direkt in eine Verschiebung (vw) um.
+        // Multiplikatoren für den perfekten 3D-Parallax-Effekt auf der Reise:
+        let posGround = percentage * 2.5;  // Am schnellsten (Grasvordergrund)
+        let posMFast = percentage * 1.5;  // Berg vorne
+        let posMMid = percentage * 0.8;  // Berg mitte
+        let posMSlow = percentage * 0.3;  // Am langsamsten (Berg hinten)
+
+        // Werte an CSS übergeben
+        document.documentElement.style.setProperty('--scroll-ground', posGround);
+        document.documentElement.style.setProperty('--scroll-m-fast', posMFast);
+        document.documentElement.style.setProperty('--scroll-m-mid', posMMid);
+        document.documentElement.style.setProperty('--scroll-m-slow', posMSlow);
     }
 
     drawLoop() {
@@ -149,8 +174,8 @@ class UIController {
         this.ctx.lineWidth = 1.5;
         this.ctx.lineCap = 'round';
 
-        // --- BLITZ LOGIK (Erst in der absoluten Endphase ab 85%) ---
-        if (this.currentPercentage > 85 && Math.random() < 0.03) {
+        // --- BLITZ LOGIK (Erst in der absoluten Endphase ab 10%) ---
+        if (this.currentPercentage < 10 && Math.random() < 0.03) {
             this.lightning.style.opacity = 0.8 + Math.random() * 0.2;
             setTimeout(() => { this.lightning.style.opacity = 0; }, 50);
         }

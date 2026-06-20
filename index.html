@@ -11,77 +11,95 @@
 <body>
 
     <div id="exhibition-scene">
-        <div id="sky-background"></div>
 
-        <div id="day-sky"></div>
+        <div id="sky-background"
+            style="position: absolute; width: 100%; height: 100%; background: linear-gradient(to bottom, #5a6577 0%, #323b4c 100%); z-index: 0;">
+        </div>
+
+        <div id="day-sky"
+            style="position: absolute; width: 100%; height: 100%; background: linear-gradient(to bottom, #4facfe 0%, #00f2fe 100%); z-index: 1; opacity: var(--day-opacity, 1); transition: opacity 0.1s linear;">
+        </div>
 
         <div id="storm-overlay"></div>
 
         <div id="sun-rays"></div>
         <div id="sun-glow"></div>
 
-        <div id="mountain-range">
-            <svg class="mountains" viewBox="0 0 1000 250" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                    d="M0 250 L0 150 L60 120 L130 160 L210 90 L280 140 L370 70 L450 130 L540 60 L620 140 L710 80 L800 150 L890 90 L1000 160 L1000 250 Z"
-                    fill="#151b29" />
-                <path
-                    d="M0 250 L0 180 L80 110 L140 150 L220 50 L270 120 L320 80 L390 160 L480 40 L530 110 L600 30 L660 120 L750 60 L820 140 L910 70 L1000 150 L1000 250 Z"
-                    fill="#090d14" />
-            </svg>
+        <div id="bg-mountains-back" class="parallax-layer">
+            <div class="mountain-track track-slow">
+                <div class="mountain-img m3 normal"></div>
+                <div class="mountain-img m3 mirrored"></div>
+                <div class="mountain-img m3 normal"></div>
+                <div class="mountain-img m3 mirrored"></div>
+            </div>
+        </div>
+
+        <div id="bg-mountains-mid" class="parallax-layer">
+            <div class="mountain-track track-mid">
+                <div class="mountain-img m2 normal"></div>
+                <div class="mountain-img m2 mirrored"></div>
+                <div class="mountain-img m2 normal"></div>
+                <div class="mountain-img m2 mirrored"></div>
+            </div>
+        </div>
+
+        <div id="bg-mountains-front" class="parallax-layer">
+            <div class="mountain-track track-fast">
+                <div class="mountain-img m1 normal"></div>
+                <div class="mountain-img m1 mirrored"></div>
+                <div class="mountain-img m1 normal"></div>
+                <div class="mountain-img m1 mirrored"></div>
+            </div>
         </div>
 
         <div id="clouds-container">
-            <svg class="cloud cloud-left" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
-                <path d="M 10 90 Q 20 30 60 40 Q 90 10 130 30 Q 170 20 190 60 Q 200 90 190 100 Z" fill="#0f131c" />
-            </svg>
-            <svg class="cloud cloud-right" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
-                <path d="M 10 80 Q 10 40 50 30 Q 80 0 140 20 Q 180 20 190 70 Q 200 100 180 100 Z" fill="#141824" />
-            </svg>
+            <img src="Clouds.png" class="cloud cloud-left" alt="Gewitterwolke">
+            <img src="Clouds.png" class="cloud cloud-right" alt="Gewitterwolke">
         </div>
 
         <canvas id="rain-canvas"></canvas>
 
-        <div id="ground-base"></div>
-        <div id="ground-grass"></div>
+        <div id="ground-night" class="ground-layer">
+            <div class="ground-track">
+                <div class="ground-img night normal"></div>
+                <div class="ground-img night mirrored"></div>
+                <div class="ground-img night normal"></div>
+                <div class="ground-img night mirrored"></div>
+            </div>
+        </div>
 
-        <div id="flowers-container">
-            <svg class="flower f1" viewBox="0 0 50 100" xmlns="http://www.w3.org/2000/svg">
-                <path d="M 25 100 L 25 40" stroke="#27ae60" stroke-width="3" fill="none" />
-                <path d="M 25 70 Q 10 60 25 50" stroke="#27ae60" stroke-width="2" fill="none" />
-                <circle cx="25" cy="30" r="12" fill="#e74c3c" />
-                <circle cx="25" cy="30" r="4" fill="#f1c40f" />
-            </svg>
-            <svg class="flower f2" viewBox="0 0 50 100" xmlns="http://www.w3.org/2000/svg">
-                <path d="M 25 100 L 25 30" stroke="#27ae60" stroke-width="3" fill="none" />
-                <circle cx="25" cy="20" r="10" fill="#9b59b6" />
-                <circle cx="25" cy="20" r="3" fill="#ffffff" />
-            </svg>
-            <svg class="flower f3" viewBox="0 0 50 100" xmlns="http://www.w3.org/2000/svg">
-                <path d="M 25 100 L 25 45" stroke="#27ae60" stroke-width="3" fill="none" />
-                <circle cx="25" cy="35" r="14" fill="#f1c40f" />
-                <circle cx="25" cy="35" r="5" fill="#e67e22" />
-            </svg>
-            <svg class="flower f4" viewBox="0 0 50 100" xmlns="http://www.w3.org/2000/svg">
-                <path d="M 25 100 L 25 35" stroke="#27ae60" stroke-width="3" fill="none" />
-                <circle cx="25" cy="25" r="11" fill="#e84393" />
-            </svg>
+        <div id="ground-day" class="ground-layer">
+            <div class="ground-track">
+                <div class="ground-img day normal"></div>
+                <div class="ground-img day mirrored"></div>
+                <div class="ground-img day normal"></div>
+                <div class="ground-img day mirrored"></div>
+            </div>
+        </div>
+
+        <div id="addons-layer">
+            <div class="bush-track">
+                <img src="assets/addons/bush1.png" class="addon" style="left: 10%;" alt="Busch">
+                <img src="assets/addons/flower1.png" class="addon" style="left: 45%; height: 60%;" alt="Blume">
+                <img src="assets/addons/bush1.png" class="addon" style="left: 85%; height: 80%;" alt="Busch">
+
+                <img src="assets/addons/bush1.png" class="addon" style="left: 110%;" alt="Busch">
+                <img src="assets/addons/flower1.png" class="addon" style="left: 145%; height: 60%;" alt="Blume">
+                <img src="assets/addons/bush1.png" class="addon" style="left: 185%; height: 80%;" alt="Busch">
+            </div>
         </div>
 
         <div id="person-wrapper">
-            <div id="person-colorful">
-                <img src="/Colourfullpeople.png" alt="Person Erleuchtet" class="person_img">
-            </div>
+            <div id="person-colorful" style="background-image: url('assets/character/Colourfullpeople.png');"></div>
 
-            <div id="person-cover">
-                <img src="/WaterGuy.png" alt="Person Silhouette" class="person_img">
-            </div>
+            <div id="person-cover"></div>
         </div>
 
         <div id="ui-overlay">
             <div id="percentage-text">0.0 <span class="percent-sign">%</span></div>
             <div id="milestone-message"></div>
         </div>
+
     </div>
 
     <script src="app.js"></script>
