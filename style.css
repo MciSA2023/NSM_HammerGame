@@ -274,61 +274,68 @@ body {
 }
 
 /* ==========================================================================
-   6. CHARACTER WRAPPER & WASSER-FILL
+   6. CHARACTER WRAPPER & SPRITESHEET (Über Kurbel gesteuert)
    ========================================================================== */
 #person-wrapper {
     position: absolute;
     bottom: 2vh;
     left: 50%;
-    transform: translateX(-50%);
 
+    /* Deine Original-Maße! */
     width: 45vh;
-    height: 100vh;
+    height: 80vh;
+
     z-index: 10;
 
-    /* DER SCHABLONEN-TRICK: 
-       Schneidet das Wasser (und alles andere) exakt an den Rändern der Silhouette ab! 
-       (Passe den Pfad an, falls dein Bild woanders liegt) */
-    -webkit-mask-image: url('assets/character/Colourfullpeople.png');
-    -webkit-mask-size: contain;
-    -webkit-mask-repeat: no-repeat;
-    -webkit-mask-position: bottom center;
+    /* TIPP ZUM ZOOM: 
+       Wenn dir die Figur INNERHALB der Box jetzt immer noch zu "riesig" 
+       vorkommt, ändere nicht width/height, sondern nutze einfach scale! 
+       scale(0.8) macht die Figur z.B. um 20% kleiner, ohne das Grid zu zerstören. 
+       Wichtig: translateX(-50%) muss hier zwingend mit drinbleiben! */
+    transform: translateX(-50%) scale(1.0);
 }
 
-#person-colorful {
+#person-colorful,
+#person-mask-wrapper {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: bottom center;
 }
 
-/* --- DAS BLAUE WASSER --- */
-/* --- DAS BLAUE WASSER (Das abfließt) --- */
+#person-colorful {
+    background-image: url('Exibition-walk.png');
+    background-size: 500% 500%;
+    /* Zwingend 500% für das 5x5 Raster */
+    background-repeat: no-repeat;
+    background-position: var(--walk-x, 0%) var(--walk-y, 0%);
+}
+
+#person-mask-wrapper {
+    -webkit-mask-image: url('Exibition-walk.png');
+    -webkit-mask-size: 500% 500%;
+    /* Zwingend 500% für das 5x5 Raster */
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: var(--walk-x, 0%) var(--walk-y, 0%);
+}
+
+/* --- DAS BLAUE WASSER (Bleibt genau wie vorher) --- */
 #person-cover {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-
-    /* Das Blau des Wassers */
     background-color: rgba(0, 162, 255, 0.9);
 
-    /* Die SVG-Wellen-Maske */
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 1000' preserveAspectRatio='none'%3E%3Cpath d='M0,50 C150,150 350,-50 500,50 C650,150 850,-50 1000,50 L1000,1500 L0,1500 Z' fill='black'/%3E%3C/svg%3E");
     mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 1000' preserveAspectRatio='none'%3E%3Cpath d='M0,50 C150,150 350,-50 500,50 C650,150 850,-50 1000,50 L1000,1500 L0,1500 Z' fill='black'/%3E%3C/svg%3E");
-
     -webkit-mask-size: 200% 150%;
     mask-size: 200% 150%;
     -webkit-mask-repeat: repeat-x;
     mask-repeat: repeat-x;
 
-    /* Die umgedrehte Mathematik: Leert sich von oben nach unten */
     -webkit-mask-position-y: calc(var(--reveal-raw, 0) * 1.2vh);
     mask-position-y: calc(var(--reveal-raw, 0) * 1.2vh);
 
@@ -337,8 +344,8 @@ body {
 
 @keyframes waveRipple {
     0% {
-        -webkit-mask-position-x: 30%;
-        mask-position-x: 30%;
+        -webkit-mask-position-x: 0%;
+        mask-position-x: 0%;
     }
 
     100% {
@@ -346,6 +353,8 @@ body {
         mask-position-x: 100%;
     }
 }
+
+/* (Die alten @keyframes playWalkCycle kannst du komplett löschen!) */
 
 /* ==========================================================================
    7. UI OVERLAY
@@ -546,17 +555,28 @@ body {
 }
 
 @keyframes walkingBob {
-
-    0%,
-    100% {
-        transform: translateX(-50%) translateY(0);
+    0% {
+        transform: translateX(-50%) translateY(0) scaleY(1) rotate(0deg);
     }
 
+    25% {
+        transform: translateX(-50%) translateY(-2vh) scaleY(1.02) rotate(2deg);
+    }
+
+    /* Schritt nach vorne, streckt sich leicht */
     50% {
-        transform: translateX(-50%) translateY(-1.5vh);
+        transform: translateX(-50%) translateY(0) scaleY(0.98) rotate(0deg);
     }
 
-    /* Ein kleiner Schritt nach oben */
+    /* Fuß setzt auf, federt ins Knie (staucht leicht) */
+    75% {
+        transform: translateX(-50%) translateY(-2vh) scaleY(1.02) rotate(-1deg);
+    }
+
+    /* Anderer Fuß geht hoch */
+    100% {
+        transform: translateX(-50%) translateY(0) scaleY(1) rotate(0deg);
+    }
 }
 
 #person-wrapper.is-walking {

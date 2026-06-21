@@ -134,35 +134,49 @@ class UIController {
         // Wipp-Animation (Gehen) triggern, wenn sich der Wert verändert
         if (typeof this.lastPercentage === 'undefined') {
             this.lastPercentage = percentage;
+            this.worldPosition = 0;
         }
 
         let delta = percentage - this.lastPercentage;
         this.lastPercentage = percentage;
 
+        // Wenn gekurbelt wird, Welt bewegen
         if (Math.abs(delta) > 0.01) {
-            const personWrapper = document.getElementById('person-wrapper');
-            if (personWrapper) {
-                personWrapper.classList.add('is-walking');
-            }
-
-            // Stoppt das Wippen, wenn 150ms lang nicht gekurbelt wird
-            clearTimeout(this.walkTimeout);
-            this.walkTimeout = setTimeout(() => {
-                if (personWrapper) {
-                    personWrapper.classList.remove('is-walking');
-                }
-            }, 150);
+            this.worldPosition += delta * 10;
         }
 
-        // --- DER LINEARE WEG (Kein Loop = Absolut ruckelfrei!) ---
-        // Wir rechnen die Prozente (0-100) direkt in eine Verschiebung (vw) um.
-        // Multiplikatoren für den perfekten 3D-Parallax-Effekt auf der Reise:
-        let posGround = percentage * 2.5;  // Am schnellsten (Grasvordergrund)
-        let posMFast = percentage * 1.5;  // Berg vorne
-        let posMMid = percentage * 0.8;  // Berg mitte
-        let posMSlow = percentage * 0.3;  // Am langsamsten (Berg hinten)
+        // --- DER 5x5 GRID WALKCYCLE ---
+        // Wie schnell die Beine wechseln (Tipp: Spiel mit diesem Wert, bis es natürlich aussieht)
+        let walkSpeed = 1.2;
+        let totalFrames = 25; // Dein Bild hat 25 Frames
+        let columns = 5;      // 5 Spalten
 
-        // Werte an CSS übergeben
+        // Aktuellen Frame anhand der zurückgelegten Strecke berechnen
+        let currentFrame = Math.floor(this.worldPosition * walkSpeed) % totalFrames;
+
+        // Verhindert Abstürze, falls man rückwärts kurbelt
+        if (currentFrame < 0) currentFrame = totalFrames + currentFrame;
+
+        // Ausrechnen, in welcher Zeile und Spalte sich der aktuelle Frame befindet
+        let col = currentFrame % columns;
+        let row = Math.floor(currentFrame / columns);
+
+        // Die CSS-Prozente für das Raster berechnen 
+        // (Bei 5 Bildern gibt es 4 Abstände -> 100% / 4 = 25%)
+        let percentX = col * 25;
+        let percentY = row * 25;
+
+        // Werte an das CSS schicken
+        document.documentElement.style.setProperty('--walk-x', `${percentX}%`);
+        document.documentElement.style.setProperty('--walk-y', `${percentY}%`);
+
+
+        // --- DER LINEARE WEG FÜR DIE LANDSCHAFT ---
+        let posGround = percentage * 2.5;
+        let posMFast = percentage * 1.5;
+        let posMMid = percentage * 0.8;
+        let posMSlow = percentage * 0.3;
+
         document.documentElement.style.setProperty('--scroll-ground', posGround);
         document.documentElement.style.setProperty('--scroll-m-fast', posMFast);
         document.documentElement.style.setProperty('--scroll-m-mid', posMMid);
