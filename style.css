@@ -336,8 +336,9 @@ body {
     -webkit-mask-repeat: repeat-x;
     mask-repeat: repeat-x;
 
-    -webkit-mask-position-y: calc(var(--reveal-raw, 0) * 1.2vh);
-    mask-position-y: calc(var(--reveal-raw, 0) * 1.2vh);
+    /* Wir ändern die 1.2vh auf 0.98vh */
+    -webkit-mask-position-y: calc(var(--reveal-raw, 0) * 0.65vh);
+    mask-position-y: calc(var(--reveal-raw, 0) * 0.65vh);
 
     animation: waveRipple 2.5s linear infinite;
 }
