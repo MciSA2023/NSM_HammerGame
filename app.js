@@ -106,71 +106,110 @@ class UIController {
         }
 
         // ==============================================================
-        // 2. DAS ÄUSSERE WETTER (Linear von 0% Sturm zu 100% Sonne)
+        // 2. DAS ÄUSSERE WETTER (In 3 klaren Phasen)
         // ==============================================================
-        let progress = percentage / 100;
+        let progress = percentage / 100; // Geht von 0.0 bis 1.0
 
-        // Licht, Gras & Berge (werden stetig bunter)
-        document.documentElement.style.setProperty('--day-opacity', progress);
-
-        // Die Sonne (bricht stetig durch)
-        document.documentElement.style.setProperty('--sun-opacity', progress);
-        document.documentElement.style.setProperty('--ray-opacity', progress);
-        document.documentElement.style.setProperty('--sun-scale', 0.5 + (progress * 0.5));
-
-        // Wolken (verziehen sich nach außen)
-        document.documentElement.style.setProperty('--cloud-parting', progress);
-        document.documentElement.style.setProperty('--cloud-opacity', 1.0 - progress);
-
-        // Regen (hört kurz vor 100% komplett auf)
-        let rainIntensity = 1.0 - (progress * 1.2);
+        // 🌧️ PHASE 1: DER REGEN (0% bis 40% der Kurbel)
+        // Das Wasser hört jetzt viel früher auf. Schon bei 40% Kurbeln ist der Regen auf 0.
+        let rainIntensity = 1.0 - (progress / 0.4);
         if (rainIntensity < 0) rainIntensity = 0;
+
+        // targetDrops steuert wahrscheinlich deine Regentropfen-Menge
         this.targetDrops = Math.floor(600 * rainIntensity);
 
+
+        // ☁️ PHASE 2: DIE WOLKEN (30% bis 70% der Kurbel)
+        // Sobald der Regen fast vorbei ist (30%), fangen die Wolken an sich zu verziehen.
+        // Bei 70% sind sie komplett vom Bildschirm verschwunden.
+        let cloudProgress = (progress - 0.3) / 0.4; // Dauer der Phase: 0.4 (70% - 30%)
+        if (cloudProgress < 0) cloudProgress = 0;
+        if (cloudProgress > 1) cloudProgress = 1;
+
+        document.documentElement.style.setProperty('--cloud-parting', cloudProgress);
+        document.documentElement.style.setProperty('--cloud-opacity', 1.0 - cloudProgress);
+
+
+        // ☀️ PHASE 3: DIE SONNE (60% bis 100% der Kurbel)
+        // Die Sonne wartet, bis die Wolken fast weg sind. Erst ab 60% fängt sie an zu strahlen.
+        let sunProgress = (progress - 0.6) / 0.4; // Dauer der Phase: 0.4 (100% - 60%)
+        if (sunProgress < 0) sunProgress = 0;
+        if (sunProgress > 1) sunProgress = 1;
+
+        document.documentElement.style.setProperty('--sun-opacity', sunProgress);
+        document.documentElement.style.setProperty('--ray-opacity', sunProgress);
+        document.documentElement.style.setProperty('--sun-scale', 0.5 + (sunProgress * 0.5));
+
+
+        // 🌄 DAS ALLGEMEINE LICHT (0% bis 100%)
+        // Die Landschaft selbst wird über die gesamte Zeit sanft heller.
+        document.documentElement.style.setProperty('--day-opacity', progress);
+
         // ==============================================================
-        // 3. DIE WELT-BEWEGUNG & DER WALKCYCLE (Linear an 0-100% gekoppelt)
+        // 3. DIE WELT-BEWEGUNG & DER WALKCYCLE (Nur noch vorwärts!)
         // ==============================================================
 
-        // ⚙️ DEIN NEUER HAUPT-REGLER FÜR DIE GESCHWINDIGKEIT:
-        // 1.0 ist die alte (schnelle) Geschwindigkeit. 
-        // Mach die Zahl kleiner (z.B. 0.5, 0.3 oder 0.1), bis sich der Start weich anfühlt!
+        // 1. Setup für den "Kilometerzähler" (Wird nur beim ersten Start aufgerufen)
+        if (typeof this.totalDistance === 'undefined') {
+            this.totalDistance = 0;
+            this.lastPercentage = percentage;
+        }
+
+        // 2. Wie stark wurde gekurbelt seit dem letzten Frame?
+        let delta = percentage - this.lastPercentage;
+        this.lastPercentage = percentage;
+
+        // 3. DIE STRENGE VORWÄRTS-LOGIK (Mit Anti-Hardware-Lag)
+
+        // Der Filter ist jetzt viel feiner (0.005 statt 0.05), 
+        // damit die winzigen Poti-Schritte am Ende nicht mehr verschluckt werden!
+        if (delta > 0.005) {
+
+            // 🚀 DER TURBOLADER FÜR DAS ENDE
+            let hardwareBoost = 1.0;
+
+            // Wenn wir im letzten Fünftel der Kurbel sind (ab 80%)...
+            if (percentage > 80) {
+                // ... verdoppeln wir künstlich die ausgelesene Strecke, 
+                // um die schwache Hardware auszugleichen! (Teste hier Werte wie 1.5, 2.0 oder 3.0)
+                hardwareBoost = 2.0;
+            }
+
+            this.totalDistance += (delta * hardwareBoost);
+        }
+
+        // ⚙️ DEIN HAUPT-REGLER FÜR DIE GESCHWINDIGKEIT:
         let masterSpeed = 0.3;
 
-        // --- A. DER LINEARE WEG FÜR DIE LANDSCHAFT ---
-        let posGround = percentage * (2.5 * masterSpeed);
-        let posMFast = percentage * (1.5 * masterSpeed);
-        let posMMid = percentage * (0.8 * masterSpeed);
-        let posMSlow = percentage * (0.3 * masterSpeed);
+        // --- A. DER WEG FÜR DIE LANDSCHAFT ---
+        // WICHTIG: Hier nutzen wir jetzt den 'Kilometerzähler' (this.totalDistance) statt der Prozente!
+        let posGround = this.totalDistance * (2.5 * masterSpeed);
+        let posMFast = this.totalDistance * (1.5 * masterSpeed);
+        let posMMid = this.totalDistance * (0.8 * masterSpeed);
+        let posMSlow = this.totalDistance * (0.3 * masterSpeed);
 
         document.documentElement.style.setProperty('--scroll-ground', posGround);
         document.documentElement.style.setProperty('--scroll-m-fast', posMFast);
         document.documentElement.style.setProperty('--scroll-m-mid', posMMid);
         document.documentElement.style.setProperty('--scroll-m-slow', posMSlow);
 
-        // --- B. DER WALKCYCLE (Direkt mit den Prozenten verknüpft) ---
+        // --- B. DER WALKCYCLE ---
         let totalFrames = 25;
         let columns = 5;
-
-        // Die Beine passen sich jetzt automatisch deinem Haupt-Regler an!
-        // (Wenn die Beine im Vergleich zum Boden zu langsam sind, mach aus der 2.5 eine höhere Zahl)
         let walkSpeed = 2.5 * masterSpeed;
 
-        // Frame direkt aus dem absoluten Prozentwert ableiten
-        let rawFrame = Math.floor(percentage * walkSpeed);
+        // Frame aus dem Kilometerzähler ableiten
+        let rawFrame = Math.floor(this.totalDistance * walkSpeed);
         let currentFrame = rawFrame % totalFrames;
 
-        // Absicherung für den Fall, dass der Kurbel-Wert minimal ins Negative rutscht
         if (currentFrame < 0) currentFrame = totalFrames + currentFrame;
 
-        // Spalte und Zeile im 5x5 Raster ausrechnen
         let col = currentFrame % columns;
         let row = Math.floor(currentFrame / columns);
 
-        // Die CSS-Prozente für das Raster berechnen (0%, 25%, 50%, 75%, 100%)
         let percentX = col * 25;
         let percentY = row * 25;
 
-        // Werte an das CSS schicken
         document.documentElement.style.setProperty('--walk-x', `${percentX}%`);
         document.documentElement.style.setProperty('--walk-y', `${percentY}%`);
     }

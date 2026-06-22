@@ -282,8 +282,8 @@ body {
     left: 50%;
 
     /* Deine Original-Maße! */
-    width: 45vh;
-    height: 80vh;
+    width: 60vh;
+    height: 70vh;
 
     z-index: 10;
 
@@ -332,7 +332,7 @@ body {
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 1000' preserveAspectRatio='none'%3E%3Cpath d='M0,50 C150,150 350,-50 500,50 C650,150 850,-50 1000,50 L1000,1500 L0,1500 Z' fill='black'/%3E%3C/svg%3E");
     mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 1000' preserveAspectRatio='none'%3E%3Cpath d='M0,50 C150,150 350,-50 500,50 C650,150 850,-50 1000,50 L1000,1500 L0,1500 Z' fill='black'/%3E%3C/svg%3E");
     -webkit-mask-size: 200% 150%;
-    mask-size: 200% 150%;
+    mask-size: 200% 100%;
     -webkit-mask-repeat: repeat-x;
     mask-repeat: repeat-x;
 
@@ -340,7 +340,7 @@ body {
     -webkit-mask-position-y: calc(var(--reveal-raw, 0) * 0.65vh);
     mask-position-y: calc(var(--reveal-raw, 0) * 0.65vh);
 
-    animation: waveRipple 2.5s linear infinite;
+    animation: waveRipple 8s linear infinite;
 }
 
 @keyframes waveRipple {
@@ -578,8 +578,4 @@ body {
     100% {
         transform: translateX(-50%) translateY(0) scaleY(1) rotate(0deg);
     }
-}
-
-#person-wrapper.is-walking {
-    animation: walkingBob 0.4s ease-in-out infinite;
 }
