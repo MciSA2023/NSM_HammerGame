@@ -1,0 +1,23 @@
+#person-colorful {
+    /* 1. Dein neuer Verlauf und das Bild */
+    background-image:
+        linear-gradient(to bottom, #ffffff 0%, #fb3ef2 100%),
+        url('Exibition-walk.png');
+
+    /* Verlauf bleibt 100%, Bild geht auf 500% für das 5x5 Raster */
+    background-size: 100% 100%, 500% 500%;
+
+    background-repeat: no-repeat, no-repeat;
+    background-position: center, var(--walk-x, 0%) var(--walk-y, 0%);
+    background-blend-mode: color;
+
+    /* =========================================
+       2. DIE MASKE
+       Schneidet den viereckigen Hintergrund ab!
+       ========================================= */
+    -webkit-mask-image: url('Exibition-walk.png');
+    /* Hier ebenfalls zwingend die 500% für das 5x5 Raster */
+    -webkit-mask-size: 500% 500%;
+    -webkit-mask-position: var(--walk-x, 0%) var(--walk-y, 0%);
+    -webkit-mask-repeat: no-repeat;
+}

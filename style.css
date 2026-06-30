@@ -310,6 +310,7 @@ body {
     /* Zwingend 500% für das 5x5 Raster */
     background-repeat: no-repeat;
     background-position: var(--walk-x, 0%) var(--walk-y, 0%);
+    /*filter: saturate(0.6) hue-rotate(180deg);*/
 }
 
 #person-mask-wrapper {
