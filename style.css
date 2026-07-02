@@ -580,3 +580,15 @@ body {
         transform: translateX(-50%) translateY(0) scaleY(1) rotate(0deg);
     }
 }
+
+#exhibition-scene {
+    /* Mischung: 
+       Startet bei #1a2430 (düsteres blaugrau).
+       Ab 50% Kurbeln mischt sich langsam #6ea4d3 (helles freundliches blau) dazu! 
+       Du kannst die Hex-Codes exakt auf deinen Geschmack anpassen.
+    */
+    background-color: color-mix(in srgb, #6ea4d3 calc(var(--sky-progress, 0) * 100%), #1a2430);
+
+    /* Wichtig: Einen Übergang setzen, damit es beim Fallen der Prozente nicht flackert */
+    transition: background-color 0.1s linear;
+}

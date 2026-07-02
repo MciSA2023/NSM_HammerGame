@@ -20,7 +20,11 @@ class GameEngine {
     updateLoop() {
         const isIdle = (Date.now() - this.lastInputTime) > 1500;
         if (isIdle && this.clicks > 0) {
-            this.clicks -= this.decayRate;
+
+
+            let drain = (this.clicks * 0.02) + 5;
+            this.clicks -= drain;
+
             if (this.clicks < 0) this.clicks = 0;
             this.calculateAndNotify();
         }
@@ -64,6 +68,7 @@ class UIController {
 
         this.initCanvas();
         window.addEventListener('resize', () => this.initCanvas());
+        this.updateScene(0);
         this.drawLoop();
     }
 
@@ -144,6 +149,15 @@ class UIController {
         // 🌄 DAS ALLGEMEINE LICHT (0% bis 100%)
         // Die Landschaft selbst wird über die gesamte Zeit sanft heller.
         document.documentElement.style.setProperty('--day-opacity', progress);
+
+        // 🌄 PHASE 4: DER HIMMEL (Startet ab 50%)
+        // Rechnet den Bereich von 50% - 100% in einen Wert von 0.0 bis 1.0 um
+        let skyProgress = (progress - 0.5) / 0.5;
+        if (skyProgress < 0) skyProgress = 0;
+        if (skyProgress > 1) skyProgress = 1;
+
+        // Schickt den Helligkeits-Wert an die CSS-Datei
+        document.documentElement.style.setProperty('--sky-progress', skyProgress);
 
         // ==============================================================
         // 3. DIE WELT-BEWEGUNG & DER WALKCYCLE (Nur noch vorwärts!)
