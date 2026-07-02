@@ -152,12 +152,13 @@ class UIController {
 
         // 🌄 PHASE 4: DER HIMMEL (Startet ab 50%)
         // Rechnet den Bereich von 50% - 100% in einen Wert von 0.0 bis 1.0 um
+        // 🌄 PHASE 4: DER HIMMEL (Startet ab 50%)
         let skyProgress = (progress - 0.5) / 0.5;
         if (skyProgress < 0) skyProgress = 0;
         if (skyProgress > 1) skyProgress = 1;
 
-        // Schickt den Helligkeits-Wert an die CSS-Datei
-        document.documentElement.style.setProperty('--sky-progress', skyProgress);
+        // DER FIX: Wir rechnen * 100 und hängen das '%' direkt hier im JS an!
+        document.documentElement.style.setProperty('--sky-progress', `${skyProgress * 100}%`);
 
         // ==============================================================
         // 3. DIE WELT-BEWEGUNG & DER WALKCYCLE (Nur noch vorwärts!)

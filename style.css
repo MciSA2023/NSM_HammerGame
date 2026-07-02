@@ -44,6 +44,16 @@ body {
     background: linear-gradient(to bottom, rgba(15, 18, 26, 0.8) 0%, rgba(28, 34, 46, 0.95) 100%);
     z-index: 1;
     transition: opacity 0.2s ease-out;
+    /* Deine weiche Animation bleibt! */
+
+    /* =========================================
+       DIE 2 NEUEN ZEILEN
+       ========================================= */
+    /* 1. Hört auf das JavaScript (Startet bei 1 = voll da, geht auf 0 = unsichtbar) */
+    opacity: var(--cloud-opacity, 1);
+
+    /* 2. Klick-Schutz: Lässt Mausklicks durch das unsichtbare Overlay durchfallen */
+    pointer-events: none;
 }
 
 #sun-rays {
@@ -582,13 +592,7 @@ body {
 }
 
 #exhibition-scene {
-    /* Mischung: 
-       Startet bei #1a2430 (düsteres blaugrau).
-       Ab 50% Kurbeln mischt sich langsam #6ea4d3 (helles freundliches blau) dazu! 
-       Du kannst die Hex-Codes exakt auf deinen Geschmack anpassen.
-    */
-    background-color: color-mix(in srgb, #6ea4d3 calc(var(--sky-progress, 0) * 100%), #1a2430);
-
-    /* Wichtig: Einen Übergang setzen, damit es beim Fallen der Prozente nicht flackert */
+    /* Funktioniert jetzt perfekt, da die Variable z.B. exakt "45%" enthält */
+    background-color: color-mix(in srgb, #6ea4d3 var(--sky-progress, 0%), #1a2430);
     transition: background-color 0.1s linear;
 }
