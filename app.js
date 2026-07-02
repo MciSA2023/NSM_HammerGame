@@ -197,11 +197,14 @@ class UIController {
         let masterSpeed = 0.3;
 
         // --- A. DER WEG FÜR DIE LANDSCHAFT ---
-        // WICHTIG: Hier nutzen wir jetzt den 'Kilometerzähler' (this.totalDistance) statt der Prozente!
-        let posGround = this.totalDistance * (2.5 * masterSpeed);
-        let posMFast = this.totalDistance * (1.5 * masterSpeed);
-        let posMMid = this.totalDistance * (0.8 * masterSpeed);
-        let posMSlow = this.totalDistance * (0.3 * masterSpeed);
+        // WICHTIG: Das "% 200" ist die Magie! 
+        // Es setzt den Wert nahtlos auf 0 zurück, sobald er die 200vw-Marke erreicht.
+        // Da Bild 1 und Bild 2 (gespiegelt) exakt 200vw breit sind, ist der Sprung 100% unsichtbar!
+
+        let posGround = (this.totalDistance * (2.5 * masterSpeed)) % 200;
+        let posMFast = (this.totalDistance * (1.5 * masterSpeed)) % 200;
+        let posMMid = (this.totalDistance * (0.8 * masterSpeed)) % 200;
+        let posMSlow = (this.totalDistance * (0.3 * masterSpeed)) % 200;
 
         document.documentElement.style.setProperty('--scroll-ground', posGround);
         document.documentElement.style.setProperty('--scroll-m-fast', posMFast);
